@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
 <meta name="theme-color" content="#F5430B" />
+<link rel="icon" href="data:," />
 <title>ULLIS PIZZA — Pizza Passion Precision</title>
 <!--
   Asset credits:
@@ -363,8 +364,8 @@
   const PULL_OUT=2.25, PULL_UP=1.55;            // big travel: slicing flings the wedge far + high to uncover the headline
   const SECT=TAU/SLICES;                        // angular width of one wedge
   const CR=(2*RADIUS*Math.sin(SECT/2))/(3*(SECT/2)); // sector centroid radius → pivot the tilt about the wedge's own middle
-  // R5: as a wedge is pulled it ROLLS toward camera so its radial cheese→sauce→dough cut face reads as a cross-section
-  const TILT_YAW=0.58, TILT_PITCH=-0.20;
+  // R5: as a wedge is pulled it ROLLS about its own radial axis so its cheese→sauce→dough cut face tips up toward the camera
+  const TILT_ROLL=1.28, TILT_PITCH=0.0;
   const pizza=new THREE.Group();const pizzaWrap=new THREE.Group();pizzaWrap.add(pizza);scene.add(pizzaWrap);
   const slices=[];
 
@@ -717,7 +718,10 @@
       const L=g.userData.lift;
       const ox=g.userData.dir.x*L*PULL_OUT, oy=L*PULL_UP, oz=g.userData.dir.z*L*PULL_OUT;
       const rt=Math.min(1,L/1.25);                                 // ramp the cut-face tilt in with the pull
-      g.quaternion.setFromEuler(new THREE.Euler(rt*TILT_PITCH, rt*TILT_YAW, 0,'YXZ'));
+      const dir3=g.userData.dir;
+      g.quaternion.setFromAxisAngle(dir3, rt*TILT_ROLL);           // roll about radial axis → cut face tips toward camera
+      if(TILT_PITCH){const pax=new THREE.Vector3(dir3.z,0,-dir3.x).normalize();
+        g.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(pax, rt*TILT_PITCH));}
       const C=g.userData.cen, Cr=C.clone().applyQuaternion(g.quaternion);
       g.position.set(ox+C.x-Cr.x, oy+C.y-Cr.y, oz+C.z-Cr.z);       // pivot the tilt about the wedge centroid, then travel
       g.updateMatrix();
