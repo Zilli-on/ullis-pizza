@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#F5430B" />
+<title>ULLIS PIZZA — Pizza Passion Precision</title>
+<!--
+  Asset credits:
+  - Pizza top texture: "All Good pizza" by Dale Cruse (San Francisco), CC BY 2.0 — Wikimedia Commons.
+  - Environment lighting: "brown_photostudio_02" from Poly Haven (CC0).
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,700..900;1,6..96,700..900&family=Playfair+Display:ital,wght@0,700;0,900;1,900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --orange:#F5430B; --orange-deep:#C9370A; --ink:#160a05; --cream:#F7E9D6; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  html,body{background:var(--orange);color:var(--ink);font-family:"DM Mono",monospace;overflow-x:hidden;}
+  body{cursor:none;}
+  @media(hover:none){body{cursor:auto;}}
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--ink);color:var(--orange);}
+
+  /* warm cinematic stage glow behind the pizza (sits under canvas + type) */
+  #stage{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:
+      radial-gradient(54% 50% at 50% 46%, rgba(255,176,104,.40) 0%, rgba(255,135,60,.15) 36%, rgba(245,67,11,0) 70%),
+      radial-gradient(120% 120% at 50% 122%, rgba(96,24,4,.52) 0%, rgba(96,24,4,0) 56%);}
+
+  #scene{position:fixed;inset:0;z-index:3;touch-action:pan-y;will-change:transform,opacity;}
+
+  #grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.06;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:grainmove 1.1s steps(3) infinite;}
+  @keyframes grainmove{0%{transform:translate(0,0);}33%{transform:translate(-4%,2%);}66%{transform:translate(3%,-3%);}100%{transform:translate(0,0);}}
+  #vignette{position:fixed;inset:0;z-index:59;pointer-events:none;
+    background:radial-gradient(122% 102% at 50% 40%,transparent 50%,rgba(34,9,2,.46) 100%);}
+
+  /* pizza-cutter cursor */
+  #cutter{position:fixed;top:0;left:0;width:54px;height:54px;pointer-events:none;z-index:9999;
+    transform:translate(-50%,-50%);opacity:0;transition:opacity .3s ease, width .3s, height .3s;mix-blend-mode:difference;}
+  #cutter.show{opacity:1;}
+  #cutter svg{width:100%;height:100%;display:block;}
+  #cutter .wheel{transform-origin:27px 27px;}
+  #dot{position:fixed;top:0;left:0;width:8px;height:8px;border-radius:50%;background:var(--ink);
+    pointer-events:none;z-index:9998;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:opacity .3s;}
+  #cutlabel{position:fixed;top:0;left:0;transform:translate(-50%,34px);pointer-events:none;z-index:9999;
+    font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#fff;mix-blend-mode:difference;opacity:0;transition:opacity .25s;white-space:nowrap;}
+  #cutlabel.show{opacity:1;}
+  @media(hover:none){#cutter,#dot,#cutlabel{display:none;}}
+
+  header{position:fixed;top:0;left:0;width:100%;z-index:100;display:flex;justify-content:space-between;
+    align-items:center;padding:22px 32px;font-size:12px;letter-spacing:2px;text-transform:uppercase;
+    font-weight:500;mix-blend-mode:difference;color:#fff;}
+  header .mid{display:flex;gap:34px;}
+  @media(max-width:680px){header .mid{display:none;}header{padding:15px 18px;font-size:11px;}}
+
+  .hero{position:relative;width:100%;height:100svh;z-index:2;}
+  .hero-type{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;pointer-events:none;font-family:"Bodoni Moda",serif;
+    font-weight:900;color:var(--ink);line-height:.80;letter-spacing:-0.048em;z-index:2;will-change:transform;
+    text-shadow:0 2px 40px rgba(60,16,2,.18);}
+  .hero-type .l{display:block;font-size:clamp(58px,17.4vw,280px);text-transform:uppercase;transform:translateY(115%);opacity:0;}
+  .hero-type .l.it{font-style:italic;}
+  .hero-type .l.mid{position:relative;z-index:0;}
+
+  .scroll-hint{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:40;font-size:11px;
+    letter-spacing:3px;text-transform:uppercase;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:.85;transition:opacity .4s;}
+  .scroll-hint .bar{width:1px;height:34px;background:var(--ink);animation:drop 1.8s infinite;}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top;}45%{transform:scaleY(1);transform-origin:top;}55%{transform:scaleY(1);transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
+  .corner-ar{position:fixed;bottom:24px;right:30px;z-index:40;font-size:11px;letter-spacing:2px;border:1px solid #fff;
+    padding:4px 10px;border-radius:20px;mix-blend-mode:difference;color:#fff;transition:opacity .4s;}
+  .touch-hint{position:fixed;bottom:74px;left:50%;transform:translateX(-50%);z-index:40;font-size:11px;
+    letter-spacing:2px;text-transform:uppercase;opacity:0;display:none;}
+  @media(hover:none){.touch-hint{display:block;animation:fade 4.5s ease forwards;animation-delay:1.4s;}}
+  @keyframes fade{0%{opacity:0;}16%{opacity:.9;}82%{opacity:.9;}100%{opacity:0;}}
+
+  .mastery{position:relative;min-height:104svh;width:100%;background:var(--ink);color:var(--cream);
+    display:flex;flex-direction:column;justify-content:center;padding:12vh 7vw;z-index:10;overflow:hidden;}
+  .mastery .eyebrow{font-size:12px;letter-spacing:4px;text-transform:uppercase;opacity:.55;margin-bottom:5vh;}
+  .mastery h2{font-family:"Bodoni Moda",serif;font-weight:900;font-size:clamp(50px,10vw,176px);line-height:.88;letter-spacing:-0.04em;text-transform:uppercase;margin-bottom:7vh;}
+  .mastery h2 em{color:var(--orange);font-style:italic;}
+  .mastery .masub{font-family:"DM Mono",monospace;font-size:13px;letter-spacing:1px;opacity:.72;margin:-3vh 0 6vh;max-width:600px;line-height:1.65;}
+  .mastery .masub b{color:var(--orange);font-weight:500;}
+  .creds{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;border-top:1px solid rgba(247,233,214,.22);}
+  .cred{padding:34px 26px 34px 0;border-bottom:1px solid rgba(247,233,214,.16);}
+  .cred .n{font-family:"Bodoni Moda",serif;font-size:50px;font-weight:700;color:var(--orange);line-height:1;margin-bottom:12px;}
+  .cred .t{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.82;line-height:1.5;}
+
+  .rsvp{position:relative;min-height:100svh;width:100%;background:var(--orange);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:9vh 6vw;z-index:10;gap:40px;overflow:hidden;}
+  .rsvp .kicker{font-size:12px;letter-spacing:4px;text-transform:uppercase;opacity:.7;}
+  .rsvp h3{font-family:"Bodoni Moda",serif;font-weight:900;font-style:italic;font-size:clamp(44px,9vw,148px);line-height:.84;letter-spacing:-0.04em;text-transform:uppercase;}
+  .btn{position:relative;display:inline-flex;align-items:center;gap:16px;background:var(--ink);color:var(--cream);
+    padding:27px 48px;border-radius:60px;font-size:15px;letter-spacing:2px;text-transform:uppercase;font-weight:500;overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1);}
+  .btn:hover{transform:scale(1.06);}
+  .btn .dot{width:9px;height:9px;border-radius:50%;background:var(--orange);animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.7);opacity:.5;}}
+  .rsvp .spots{font-size:12px;letter-spacing:3px;text-transform:uppercase;opacity:.65;}
+  .footer{position:absolute;bottom:22px;left:0;width:100%;display:flex;justify-content:space-between;padding:0 30px;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.55;}
+
+  .reveal{opacity:0;transform:translateY(44px);transition:opacity 1s ease,transform 1s cubic-bezier(.2,.8,.2,1);}
+  .reveal.in{opacity:1;transform:none;}
+
+  #load{position:fixed;inset:0;background:var(--orange);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .9s ease;}
+  #load.hide{opacity:0;pointer-events:none;}
+  #load .word{font-family:"Bodoni Moda",serif;font-style:italic;font-weight:900;font-size:clamp(40px,9vw,90px);color:var(--ink);letter-spacing:-0.03em;}
+  #load .ctr{font-size:13px;letter-spacing:3px;}
+  #load .line{width:42vw;max-width:380px;height:1px;background:rgba(22,10,5,.25);position:relative;overflow:hidden;}
+  #load .line i{position:absolute;left:0;top:0;height:100%;width:0;background:var(--ink);}
+</style>
+</head>
+<body>
+
+<div id="load">
+  <div class="word">Ullis&nbsp;Pizza</div>
+  <div class="line"><i id="loadbar"></i></div>
+  <div class="ctr"><span id="loadnum">0</span>%</div>
+</div>
+
+<div id="dot"></div>
+<div id="cutter"><svg viewBox="0 0 54 54"><g class="wheel">
+  <circle cx="27" cy="27" r="13" fill="none" stroke="#fff" stroke-width="2.2"/>
+  <circle cx="27" cy="27" r="3.2" fill="#fff"/>
+  <g stroke="#fff" stroke-width="1.6">
+    <line x1="27" y1="14" x2="27" y2="20"/><line x1="27" y1="34" x2="27" y2="40"/>
+    <line x1="14" y1="27" x2="20" y2="27"/><line x1="34" y1="27" x2="40" y2="27"/>
+    <line x1="18" y1="18" x2="22" y2="22"/><line x1="32" y1="32" x2="36" y2="36"/>
+    <line x1="36" y1="18" x2="32" y2="22"/><line x1="22" y1="32" x2="18" y2="36"/>
+  </g></g></svg></div>
+<div id="cutlabel">Drag to slice</div>
+
+<div id="stage"></div>
+<div id="scene"></div>
+<div id="grain"></div>
+<div id="vignette"></div>
+
+<header>
+  <div class="brand">ULLIS.PIZZA</div>
+  <div class="mid"><span id="soundtoggle">[ SOUND OFF ]</span><span>[ 001 ]</span></div>
+  <div class="contact">CONTACT</div>
+</header>
+
+<section class="hero">
+  <div class="hero-type" id="herotype">
+    <span class="l" data-i="0">Pizza</span>
+    <span class="l it mid" data-i="1">Passion</span>
+    <span class="l" data-i="2">Precision</span>
+  </div>
+</section>
+
+<div class="scroll-hint" id="scrollhint"><span>Scroll for more</span><div class="bar"></div></div>
+<div class="corner-ar" id="cornerar">[ 4K ]</div>
+<div class="touch-hint">Tap &amp; drag a slice to pull it</div>
+
+<section class="mastery">
+  <div class="eyebrow reveal">— The Maestro · Ullis Pizza</div>
+  <h2 class="reveal">Ulli<br><em>Haus</em></h2>
+  <div class="masub reveal">The maestro behind <b>Ullis Pizza</b> — creator and head chef who develops every pizza by hand.</div>
+  <div class="creds">
+    <div class="cred reveal"><div class="n">17</div><div class="t">Years of Pizza Mastery</div></div>
+    <div class="cred reveal"><div class="n">◆</div><div class="t">Certified Pizza Master</div></div>
+    <div class="cred reveal"><div class="n">◎</div><div class="t">World of Pizza</div></div>
+    <div class="cred reveal"><div class="n">♛</div><div class="t">Pizza Worldcup</div></div>
+  </div>
+</section>
+
+<section class="rsvp">
+  <div class="kicker reveal">— Next Event</div>
+  <h3 class="reveal">Taste the<br>Mastery</h3>
+  <a class="btn reveal" href="#" id="rsvpbtn"><span class="dot"></span> RSVP for Next Pizza Event</a>
+  <div class="spots reveal">Limited Spots</div>
+  <div class="footer"><span>ULLIS.PIZZA</span><span>© 2026 — Forno Italiano</span></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  const sceneEl=document.getElementById('scene');
+  let W=innerWidth,H=innerHeight;
+  const isTouch=matchMedia('(hover:none)').matches;
+  const TAU=Math.PI*2;
+
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(W,H);
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.8;
+  sceneEl.appendChild(renderer.domElement);
+
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(34,W/H,0.1,100);
+  let camBase=new THREE.Vector3(0,5.6,11.0), camLook=new THREE.Vector3(0,0.05,0);
+  function placeCam(){const m=W<760; camBase.set(0, m?5.7:5.0, m?13.2:11.4); camLook.set(0, m?0.2:0.12, 0);
+    camera.position.copy(camBase); camera.lookAt(camLook);}
+  placeCam();
+
+  // ---- lighting: HDRI environment carries most of it; a few shaping lights on top ----
+  scene.add(new THREE.AmbientLight(0xffe9d6,0.12));
+  const key=new THREE.DirectionalLight(0xfff0db,1.62);key.position.set(5.5,12,6.5);
+  key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.near=1;key.shadow.camera.far=42;
+  key.shadow.camera.left=-7;key.shadow.camera.right=7;key.shadow.camera.top=7;key.shadow.camera.bottom=-7;
+  key.shadow.bias=-0.00035;key.shadow.radius=4;scene.add(key);
+  const fill=new THREE.DirectionalLight(0xffd9b4,0.38);fill.position.set(-6,4,4);scene.add(fill);
+  const rim=new THREE.DirectionalLight(0xff5e1f,0.55);rim.position.set(-4,4.5,-7);scene.add(rim);   // brand-orange back rim
+  const warm=new THREE.PointLight(0xffb066,0.16,38);warm.position.set(3,3.2,5);scene.add(warm);
+
+  // procedural fallback environment (used until / unless the HDRI loads)
+  (function setupEnvFallback(){
+    const c=document.createElement('canvas');c.width=512;c.height=256;const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,0,256);
+    g.addColorStop(0,'#fff3e0');g.addColorStop(0.45,'#ffd9a8');g.addColorStop(0.7,'#c8642a');g.addColorStop(1,'#241108');
+    x.fillStyle=g;x.fillRect(0,0,512,256);
+    const h=x.createRadialGradient(150,66,4,150,66,120);h.addColorStop(0,'rgba(255,255,255,0.95)');h.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=h;x.beginPath();x.arc(150,66,120,0,7);x.fill();
+    const h2=x.createRadialGradient(380,108,4,380,108,90);h2.addColorStop(0,'rgba(255,210,150,0.7)');h2.addColorStop(1,'rgba(255,210,150,0)');
+    x.fillStyle=h2;x.beginPath();x.arc(380,108,90,0,7);x.fill();
+    const eq=new THREE.CanvasTexture(c);eq.mapping=THREE.EquirectangularReflectionMapping;
+    try{const pm=new THREE.PMREMGenerator(renderer);pm.compileEquirectangularShader();
+      scene.environment=pm.fromEquirectangular(eq).texture;pm.dispose();}
+    catch(e){scene.environment=eq;}
+  })();
+
+  // ---- real HDRI environment (Poly Haven, tonemapped) for believable specular ----
+  const texLoader=new THREE.TextureLoader();
+  let envDone=false;
+  texLoader.load('assets/studio_env_2k.jpg', function(tex){
+    tex.mapping=THREE.EquirectangularReflectionMapping;
+    try{const pm=new THREE.PMREMGenerator(renderer);pm.compileEquirectangularShader();
+      const env=pm.fromEquirectangular(tex).texture; scene.environment=env; pm.dispose(); tex.dispose();}
+    catch(e){tex.mapping=THREE.EquirectangularReflectionMapping; scene.environment=tex;}
+    envDone=true;
+  }, undefined, function(){envDone=true;});
+
+  // ---- procedural support textures (crust side, sauce, fallback cheese) ----
+  function crustTex(){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+    x.fillStyle='#d49a4f';x.fillRect(0,0,512,512);
+    for(let i=0;i<1100;i++){const px=Math.random()*512,py=Math.random()*512,r=2+Math.random()*10;x.fillStyle='rgba('+(150+Math.random()*70|0)+','+(90+Math.random()*55|0)+',40,'+(0.12+Math.random()*0.45)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    for(let i=0;i<60;i++){const px=Math.random()*512,py=Math.random()*512,r=6+Math.random()*20;x.fillStyle='rgba(70,38,16,'+(0.3+Math.random()*0.45)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    const t=new THREE.CanvasTexture(c);t.anisotropy=4;return t;}
+  function heightToNormal(srcCanvas,strength){
+    const w=srcCanvas.width,h=srcCanvas.height,sd=srcCanvas.getContext('2d').getImageData(0,0,w,h).data;
+    const out=document.createElement('canvas');out.width=w;out.height=h;const oc=out.getContext('2d'),od=oc.createImageData(w,h);
+    const Hf=(x,y)=>{x=(x+w)%w;y=(y+h)%h;return sd[(y*w+x)*4]/255;};
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+      const dx=(Hf(x-1,y)-Hf(x+1,y))*strength, dy=(Hf(x,y-1)-Hf(x,y+1))*strength, nz=1.0, len=Math.hypot(dx,dy,nz),i=(y*w+x)*4;
+      od.data[i]=((dx/len)*0.5+0.5)*255;od.data[i+1]=((dy/len)*0.5+0.5)*255;od.data[i+2]=((nz/len)*0.5+0.5)*255;od.data[i+3]=255;}
+    oc.putImageData(od,0,0);return new THREE.CanvasTexture(out);
+  }
+  function fallbackCheese(){const c=document.createElement('canvas');c.width=c.height=1024;const x=c.getContext('2d');
+    x.fillStyle='#c8531c';x.fillRect(0,0,1024,1024);
+    for(let i=0;i<620;i++){const r=24+Math.random()*78,px=Math.random()*1024,py=Math.random()*1024;const g=x.createRadialGradient(px,py,2,px,py,r);
+      g.addColorStop(0,'rgba(249,219,138,0.97)');g.addColorStop(.65,'rgba(241,203,116,0.62)');g.addColorStop(1,'rgba(236,196,110,0)');x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    for(let i=0;i<130;i++){const px=Math.random()*1024,py=Math.random()*1024,r=8+Math.random()*22;
+      x.fillStyle='rgba(110,52,18,'+(0.3+Math.random()*0.4)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
+
+  // baked-bread albedo for the cornicione (tube UVs → tiles cleanly): golden→char speckle
+  function breadAlbedo(){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,0,512);g.addColorStop(0,'#c79a52');g.addColorStop(.5,'#b07a2c');g.addColorStop(1,'#7e4a1b');
+    x.fillStyle=g;x.fillRect(0,0,512,512);
+    for(let i=0;i<300;i++){const px=Math.random()*512,py=Math.random()*512,r=4+Math.random()*16;        // floury highlights
+      x.fillStyle='rgba('+(222+Math.random()*28|0)+','+(192+Math.random()*32|0)+','+(138+Math.random()*42|0)+','+(0.08+Math.random()*0.22)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    for(let i=0;i<480;i++){const px=Math.random()*512,py=Math.random()*512,r=3+Math.random()*12;          // golden blisters
+      x.fillStyle='rgba('+(150+Math.random()*72|0)+','+(92+Math.random()*56|0)+',36,'+(0.16+Math.random()*0.5)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    for(let cl=0;cl<30;cl++){const cx=Math.random()*512,cy=Math.random()*512;                            // clustered char speckle
+      for(let i=0;i<16;i++){const px=cx+(Math.random()-0.5)*50,py=cy+(Math.random()-0.5)*50,r=1.4+Math.random()*5.5;
+        x.fillStyle='rgba('+(34+Math.random()*42|0)+','+(18+Math.random()*22|0)+',8,'+(0.32+Math.random()*0.5)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}}
+    const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;}
+  // height field for blistered bread relief (bright = raised bubbles)
+  function breadHeight(){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+    x.fillStyle='#7a7a7a';x.fillRect(0,0,512,512);
+    for(let i=0;i<160;i++){const px=Math.random()*512,py=Math.random()*512,r=8+Math.random()*32;          // puffy blisters
+      const g=x.createRadialGradient(px,py,1,px,py,r);g.addColorStop(0,'rgba(255,255,255,0.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    for(let i=0;i<1000;i++){const px=Math.random()*512,py=Math.random()*512,r=1+Math.random()*5;          // grain + char pits
+      x.fillStyle=(Math.random()<0.5?'rgba(255,255,255,':'rgba(0,0,0,')+(0.10+Math.random()*0.4)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    return c;}
+
+  const crTex=crustTex();
+  // crust side / cut dough: browned, blistered baked bread (no albedo map → no planar-UV streak on walls)
+  const crustNrm=heightToNormal(breadHeight(),3.0);crustNrm.wrapS=crustNrm.wrapT=THREE.RepeatWrapping;crustNrm.repeat.set(3,1.5);
+  const crustMat=new THREE.MeshStandardMaterial({roughness:0.94,color:0xa4661f,normalMap:crustNrm,normalScale:new THREE.Vector2(1.35,1.35),envMapIntensity:0.38});
+  // puffy cornicione rim — real baked bread albedo + relief
+  const cornNrm=heightToNormal(breadHeight(),3.4);cornNrm.wrapS=cornNrm.wrapT=THREE.RepeatWrapping;cornNrm.repeat.set(3,2);
+  const cornAlb=breadAlbedo();cornAlb.repeat.set(3,2);
+  const cornMat=new THREE.MeshStandardMaterial({map:cornAlb,color:0xffffff,roughness:0.9,normalMap:cornNrm,normalScale:new THREE.Vector2(1.15,1.15),envMapIntensity:0.42});
+  const charMat=new THREE.MeshStandardMaterial({map:crTex,roughness:0.82,color:0x7c4f25,envMapIntensity:0.45});
+  const sauceMat=new THREE.MeshStandardMaterial({color:0x9c2a0d,roughness:0.66,envMapIntensity:0.6});
+  // the hero material — real pizza photo as albedo; normal+roughness derived at runtime
+  const cheeseMat=new THREE.MeshStandardMaterial({map:fallbackCheese(),color:0xffffff,roughness:0.8,metalness:0.0,envMapIntensity:1.05});
+
+  let photoReady=false;
+  texLoader.load('assets/pizza_top.jpg', function(tex){
+    tex.encoding=THREE.sRGBEncoding; tex.anisotropy=8;
+    cheeseMat.map=tex; cheeseMat.needsUpdate=true; photoReady=true;
+  }, undefined, function(){photoReady=true;});
+
+  // best-effort: derive a graded albedo + normal + roughness from the photo's pixels
+  (function deriveFromPhoto(){
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=function(){ try{
+      const S=1024;
+      const ac=document.createElement('canvas');ac.width=ac.height=S;const ax=ac.getContext('2d');
+      ax.drawImage(img,0,0,S,S);
+      const id=ax.getImageData(0,0,S,S),d=id.data;
+      // grade copy for albedo (saturation + warmth + gentle gain)
+      const al=document.createElement('canvas');al.width=al.height=S;const alx=al.getContext('2d');
+      const aid=alx.createImageData(S,S),ad=aid.data;
+      // roughness + height buffers
+      const rc=document.createElement('canvas');rc.width=rc.height=S;const rx=rc.getContext('2d');
+      const rid=rx.createImageData(S,S),rd=rx.createImageData(S,S).data; // rd reused as height (gray)
+      const rough=rid.data;
+      const aoc=document.createElement('canvas');aoc.width=aoc.height=S;const aox=aoc.getContext('2d');
+      const aoid=aox.createImageData(S,S),ao=aoid.data;            // baked AO → fake contact shadow in the gaps
+      for(let i=0;i<d.length;i+=4){
+        let r=d[i],g=d[i+1],b=d[i+2];
+        const L=0.299*r+0.587*g+0.114*b;
+        // gentle saturation, neutral grade — no radioactive warm push
+        r=L+(r-L)*1.05; g=L+(g-L)*1.05; b=L+(b-L)*1.05;
+        r=Math.min(255,r*1.0+2); g=Math.min(255,g*1.0); b=Math.min(255,b*1.0+1);
+        ad[i]=r;ad[i+1]=g;ad[i+2]=b;ad[i+3]=255;
+        // roughness: reddish/greasy cheese, sauce, pepperoni -> glossy(low); pale crust & dark char -> matte(high)
+        const redness=Math.max(0,(d[i]-d[i+2])/255);
+        let ro=0.86-0.52*redness-0.12*(L/255);
+        ro=Math.max(0.30,Math.min(0.95,ro));
+        const rv=ro*255; rough[i]=rv;rough[i+1]=rv;rough[i+2]=rv;rough[i+3]=255;
+        // height (gray) into the same imagedata buffer of a height canvas
+        rd[i]=L;rd[i+1]=L;rd[i+2]=L;rd[i+3]=255;
+        // AO: darken low-luminance valleys/gaps so toppings read as sitting ON the cheese
+        const av=(0.46+0.54*Math.pow(L/255,0.85))*255;
+        ao[i]=av;ao[i+1]=av;ao[i+2]=av;ao[i+3]=255;
+      }
+      alx.putImageData(aid,0,0);
+      const albedo=new THREE.CanvasTexture(al);albedo.encoding=THREE.sRGBEncoding;albedo.anisotropy=8;
+      rx.putImageData(rid,0,0);
+      const roughTex=new THREE.CanvasTexture(rc);roughTex.anisotropy=4;
+      const hc=document.createElement('canvas');hc.width=hc.height=S;hc.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rd),S,S),0,0);
+      const normalTex=heightToNormal(hc,3.4);normalTex.anisotropy=4;
+      aox.putImageData(aoid,0,0);
+      const aoTex=new THREE.CanvasTexture(aoc);aoTex.anisotropy=4;
+      cheeseMat.map=albedo;
+      cheeseMat.roughnessMap=roughTex;cheeseMat.roughness=1.0;
+      cheeseMat.normalMap=normalTex;cheeseMat.normalScale=new THREE.Vector2(0.85,0.85);
+      cheeseMat.aoMap=aoTex;cheeseMat.aoMapIntensity=0.9;
+      cheeseMat.needsUpdate=true; photoReady=true;
+    }catch(e){/* keep TextureLoader albedo */} };
+    img.onerror=function(){};
+    img.src='assets/pizza_top.jpg';
+  })();
+
+  // contact shadow
+  function shadowTex(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
+    const g=x.createRadialGradient(128,128,8,128,128,128);g.addColorStop(0,'rgba(26,7,2,0.6)');g.addColorStop(0.5,'rgba(26,7,2,0.24)');g.addColorStop(1,'rgba(26,7,2,0)');
+    x.fillStyle=g;x.fillRect(0,0,256,256);return new THREE.CanvasTexture(c);}
+  const shadow=new THREE.Mesh(new THREE.PlaneGeometry(9.0,9.0),new THREE.MeshBasicMaterial({map:shadowTex(),transparent:true,depthWrite:false,opacity:0.92}));
+  shadow.rotation.x=-Math.PI/2;shadow.position.y=-1.62;
+  const boardWrap=new THREE.Group();boardWrap.add(shadow);scene.add(boardWrap);
+
+  const SLICES=8,RADIUS=2.55,GAP=0.0;          // GAP=0 → seamless WHOLE pizza on load (no pre-cut lines)
+  const PULL_OUT=2.25, PULL_UP=1.55;            // big travel: slicing flings the wedge far + high to uncover the headline
+  const pizza=new THREE.Group();const pizzaWrap=new THREE.Group();pizzaWrap.add(pizza);scene.add(pizzaWrap);
+  const slices=[];
+
+  // crust (clean baked block) / tomato sauce / melted-cheese body — gives a real layered cross-section on the cut
+  const cheeseSideMat=new THREE.MeshStandardMaterial({color:0xe9b24c,roughness:0.46,metalness:0.0,envMapIntensity:1.05});
+  const D1=0.30, D2=0.07, D3=0.13, THICK=D1+D2+D3;
+  // deterministic surface relief (function of x,z only) → adjacent wedges + photo-skin line up perfectly
+  function reliefY(x,z){const rad=Math.hypot(x,z);const f=Math.min(1,rad/RADIUS);
+    const crown=(1-f)*0.06;                                        // gentle dome through the middle
+    const lump=Math.sin(x*7.2+z*5.1)*Math.cos(z*6.3-x*4.4)*0.042;  // bumpy molten cheese
+    const dip=Math.max(0,(f-0.78)/0.22);                           // cheese recedes under the raised crust rim
+    return crown+lump - dip*dip*0.13;}
+  // puffy baked cornicione: a blistered, irregular bread ring hugging the outer arc of each wedge
+  function buildCornicione(i,a0,a1){
+    const segs=Math.max(8,Math.round((a1-a0)/TAU*72));
+    const Rc=RADIUS*0.985, topY=THICK*0.66, pathPts=[];
+    for(let s=0;s<=segs;s++){const a=a0+(a1-a0)*s/segs;pathPts.push(new THREE.Vector3(Math.cos(a)*Rc,topY,Math.sin(a)*Rc));}
+    const geo=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pathPts),segs,0.205,14,false);
+    const pos=geo.attributes.position,nor=geo.attributes.normal;   // irregular blistered silhouette (not a smooth cylinder)
+    for(let v=0;v<pos.count;v++){const x=pos.getX(v),y=pos.getY(v),z=pos.getZ(v);
+      const bump=(Math.sin(x*5.5+z*4.7)*Math.cos(z*5.1-x*4.3))*0.05 + (Math.sin(x*17.0+z*13.0)*0.5+0.5)*0.032;
+      pos.setX(v,x+nor.getX(v)*bump);pos.setY(v,y+nor.getY(v)*bump);pos.setZ(v,z+nor.getZ(v)*bump);}
+    pos.needsUpdate=true;geo.computeVertexNormals();
+    const m=new THREE.Mesh(geo,cornMat);m.castShadow=true;m.receiveShadow=true;m.userData.si=i;return m;}
+  function buildSlice(i){
+    const a0=(i/SLICES)*TAU+GAP,a1=((i+1)/SLICES)*TAU-GAP;
+    const shp=new THREE.Shape();shp.moveTo(0,0);shp.lineTo(Math.cos(a0)*RADIUS,Math.sin(a0)*RADIUS);shp.absarc(0,0,RADIUS,a0,a1,false);shp.lineTo(0,0);
+    function layer(depth,yOff,mat){const gg=new THREE.ExtrudeGeometry(shp,{depth,bevelEnabled:false,curveSegments:72});gg.rotateX(-Math.PI/2);
+      const mm=new THREE.Mesh(gg,mat);mm.position.y=yOff;mm.castShadow=true;mm.receiveShadow=true;mm.userData.si=i;return mm;}
+    const dough=layer(D1,0,crustMat);              // baked crust block (clean side walls)
+    const sauce=layer(D2,D1,sauceMat);             // tomato sauce (red line in the cross-section)
+    const cheeseBody=layer(D3,D1+D2,cheeseSideMat);// melted-cheese block — supplies CLEAN sides/cut faces
+
+    // puff the cheese BODY top (walls stay connected → no rim gap, and the streaky photo never lands on a wall)
+    (function(geo){const pos=geo.attributes.position;
+      for(let v=0;v<pos.count;v++){const yy=pos.getY(v);
+        if(yy>D3*0.5)pos.setY(v, yy+reliefY(pos.getX(v),pos.getZ(v)));}
+      pos.needsUpdate=true;geo.computeVertexNormals();})(cheeseBody.geometry);
+
+    // the real pizza photo lives ONLY on a thin top skin (planar top-down UV) — sits just above the body
+    const capGeo=new THREE.ShapeGeometry(shp,72);capGeo.rotateX(-Math.PI/2);
+    (function(geo){const pos=geo.attributes.position,uv=geo.attributes.uv;
+      for(let v=0;v<pos.count;v++){const x=pos.getX(v),z=pos.getZ(v);
+        uv.setXY(v, x/(2*RADIUS)+0.5, 1.0-(z/(2*RADIUS)+0.5));
+        pos.setY(v, reliefY(x,z));}
+      uv.needsUpdate=true;pos.needsUpdate=true;geo.computeVertexNormals();})(capGeo);
+    capGeo.setAttribute('uv2', capGeo.attributes.uv.clone());   // aoMap channel (baked contact shadow)
+    const cheese=new THREE.Mesh(capGeo,cheeseMat);cheese.position.y=D1+D2+D3+0.004;
+    cheese.userData.si=i;cheese.castShadow=true;cheese.receiveShadow=true;
+
+    const corn=buildCornicione(i,a0,a1);           // raised baked rim, pulls out with the wedge
+    const g=new THREE.Group();g.add(dough);g.add(sauce);g.add(cheeseBody);g.add(cheese);g.add(corn);
+    g.userData={i,a0,a1,mid:(a0+a1)/2,dir:new THREE.Vector3(Math.cos((a0+a1)/2),0,Math.sin((a0+a1)/2)),lift:0,vel:0};
+    return g;
+  }
+  for(let i=0;i<SLICES;i++){const s=buildSlice(i);pizza.add(s);slices.push(s);}
+  pizza.rotation.x=0.52;pizza.position.y=0.14;  // POSITIVE tilt → top toward the viewer (more oblique 3/4)
+
+  // ---- cheese pull strands (signature) — real 3D tubes that stretch from the cut edges ----
+  const STRANDS_PER_EDGE=6, PTS=24;
+  const strandMatBase=new THREE.MeshStandardMaterial({color:0xf2c45a,roughness:0.34,metalness:0.0,emissive:0x281a05,emissiveIntensity:0.35,envMapIntensity:1.1,transparent:true,opacity:0});
+  const cheeseStrands=[];
+  function makeStrand(){
+    const mat=strandMatBase.clone();
+    const mesh=new THREE.Mesh(new THREE.BufferGeometry(),mat);mesh.frustumCulled=false;mesh.visible=false;mesh.castShadow=false;pizza.add(mesh);
+    return {mesh,mat,
+      posR:0.14+Math.random()*0.62,        // random attach radius along the cut edge → irregular spacing
+      thick:0.42+Math.random()*1.15,       // per-strand thickness
+      breakL:1.5+Math.random()*1.7,        // each strand snaps at its own length
+      att:0.56+Math.random()*0.34,         // attach height on the cut face
+      curl:(Math.random()-0.5)*0.34,
+      sagK:0.55+Math.random()*0.85,
+      ph:Math.random()*6.28,
+      jit:(Math.random()-0.5)*0.05,
+      wisp:Math.random()<0.28};            // a few thin wisps
+  }
+  for(let s=0;s<STRANDS_PER_EDGE*2;s++)cheeseStrands.push(makeStrand());
+
+  function updateStrands(slice,t){
+    if(!slice){cheeseStrands.forEach(s=>{s.mesh.visible=false;});return;}
+    const L=slice.userData.lift;
+    const off=new THREE.Vector3(slice.userData.dir.x*L*PULL_OUT, L*PULL_UP, slice.userData.dir.z*L*PULL_OUT);
+    const fade=Math.min(1,Math.max(0,(L-0.05)/0.26));
+    const tang=new THREE.Vector3(-slice.userData.dir.z,0,slice.userData.dir.x);
+    const edges=[slice.userData.a0, slice.userData.a1];
+    let idx=0;
+    for(let e=0;e<2;e++){
+      const ang=edges[e];
+      for(let k=0;k<STRANDS_PER_EDGE;k++){
+        const st=cheeseStrands[idx++];
+        const snap=Math.max(0,Math.min(1,1-(L-st.breakL)/0.7));  // each strand breaks at its own length
+        if(L<0.05||snap<=0.02){st.mesh.visible=false;continue;}
+        const rr=RADIUS*st.posR+st.jit;
+        const A=new THREE.Vector3(Math.cos(ang)*rr, THICK*st.att, Math.sin(ang)*rr);
+        const B=A.clone().add(off);
+        const sag=Math.min(1.8, L*0.95)*st.sagK;
+        const pts=[];
+        for(let p=0;p<PTS;p++){const tt=p/(PTS-1);const env=Math.sin(Math.PI*tt);
+          const curlAmt=st.curl*env*(0.5+0.5*Math.sin(t*2+st.ph));
+          pts.push(new THREE.Vector3(
+            A.x+(B.x-A.x)*tt + tang.x*curlAmt,
+            A.y+(B.y-A.y)*tt - env*sag,
+            A.z+(B.z-A.z)*tt + tang.z*curlAmt));}
+        const curve=new THREE.CatmullRomCurve3(pts);
+        const base=st.wisp?0.026:0.085;                          // thin wisps vs full strands
+        const rad=Math.max(0.009,(base*st.thick - L*0.014));     // varied thickness, necks/thins as it stretches
+        const old=st.mesh.geometry;
+        st.mesh.geometry=new THREE.TubeGeometry(curve,24,rad,st.wisp?5:7,false);
+        if(old)old.dispose();
+        st.mat.opacity=0.96*fade*snap; st.mesh.visible=true;
+      }
+    }
+  }
+
+  // steam
+  function smokeTex(){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');
+    for(let i=0;i<8;i++){const px=40+Math.random()*48,py=40+Math.random()*48,r=24+Math.random()*34;
+      const g=x.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,'rgba(255,250,244,0.5)');g.addColorStop(1,'rgba(255,250,244,0)');
+      x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    return new THREE.CanvasTexture(c);}
+  const sTex=smokeTex();
+  const steam=new THREE.Group();scene.add(steam);
+  const baseSteam=new THREE.SpriteMaterial({map:sTex,color:0xfff6ec,opacity:0,transparent:true,depthWrite:false,blending:THREE.NormalBlending});
+  const puffs=[];
+  for(let i=0;i<20;i++){const sp=new THREE.Sprite(baseSteam.clone());
+    const sz=1.6+Math.random()*1.4;sp.scale.set(sz,sz,1);
+    sp.position.set((Math.random()-0.5)*3.2, 0.55+Math.random()*2.0, (Math.random()-0.5)*3.2);
+    sp.userData={sp:0.16+Math.random()*0.22, ph:Math.random()*6.28, amp:0.18+Math.random()*0.25, base:Math.random()};
+    steam.add(sp);puffs.push(sp);}
+
+  // ---- interaction ----
+  const ray=new THREE.Raycaster();
+  const mouse=new THREE.Vector2(-2,-2);
+  let hovered=-1, grabbed=-1, pull=0, lastX=0,lastY=0, dragDist=0, wheelAngle=0, lastMoveT=0;
+  const dot=document.getElementById('dot'),cutter=document.getElementById('cutter'),wheel=cutter.querySelector('.wheel'),cutlabel=document.getElementById('cutlabel');
+  let mx=W/2,my=H/2,dx=W/2,dy=H/2;
+
+  function setMouse(px,py){const r=renderer.domElement.getBoundingClientRect();mouse.x=((px-r.left)/r.width)*2-1;mouse.y=-((py-r.top)/r.height)*2+1;mx=px;my=py;}
+  function onDown(px,py){setMouse(px,py);lastX=px;lastY=py;dragDist=0;
+    if(hovered>=0){grabbed=hovered;cutlabel.textContent='Slicing';playSlice();}}
+  function onMove(px,py){
+    if(grabbed>=0){dragDist+=Math.hypot(px-lastX,py-lastY);pull=Math.min(2.0,dragDist/200);}
+    wheelAngle+=(px-lastX)*0.6; lastX=px;lastY=py;lastMoveT=performance.now();setMouse(px,py);
+  }
+  function onUp(){grabbed=-1;pull=0;cutlabel.textContent='Drag to slice';}
+  addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
+  addEventListener('mousedown',e=>onDown(e.clientX,e.clientY));
+  addEventListener('mouseup',onUp);
+  sceneEl.addEventListener('touchstart',e=>{if(e.touches[0])onDown(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  sceneEl.addEventListener('touchmove',e=>{if(e.touches[0])onMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
+  sceneEl.addEventListener('touchend',()=>{onUp();mouse.set(-2,-2);},{passive:true});
+  setTimeout(()=>{cutter.classList.add('show');cutlabel.classList.add('show');},800);
+
+  let pYaw=0,pPit=0,camPX=0,camPY=0;
+  addEventListener('mousemove',e=>{const nx=(e.clientX/W)*2-1,ny=(e.clientY/H)*2-1;pYaw=nx*0.34;pPit=ny*0.12;camPX=nx*0.55;camPY=ny*0.32;});
+  addEventListener('resize',()=>{W=innerWidth;H=innerHeight;camera.aspect=W/H;placeCam();camera.updateProjectionMatrix();renderer.setSize(W,H);resizePP();});
+  let scrollP=0;addEventListener('scroll',()=>{scrollP=Math.min(1,scrollY/innerHeight);});
+
+  // sound
+  let actx=null;
+  function ensureCtx(){if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();return actx;}
+  function playSlice(){ if(!soundOn)return; const a=ensureCtx();
+    const dur=0.18,buf=a.createBuffer(1,a.sampleRate*dur,a.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);}
+    const src=a.createBufferSource();src.buffer=buf;const f=a.createBiquadFilter();f.type='highpass';f.frequency.value=1800;
+    const g=a.createGain();g.gain.value=0.12;src.connect(f);f.connect(g);g.connect(a.destination);src.start();}
+  let soundOn=false,hum,humGain;
+  document.getElementById('soundtoggle').addEventListener('click',function(){
+    const a=ensureCtx();
+    if(!hum){hum=a.createOscillator();humGain=a.createGain();hum.type='sine';hum.frequency.value=68;humGain.gain.value=0;hum.connect(humGain);humGain.connect(a.destination);hum.start();}
+    soundOn=!soundOn;humGain.gain.linearRampToValueAtTime(soundOn?0.035:0,a.currentTime+0.4);
+    this.textContent=soundOn?'[ SOUND ON ]':'[ SOUND OFF ]';});
+  document.getElementById('rsvpbtn').addEventListener('click',e=>{e.preventDefault();document.querySelector('.rsvp .spots').textContent='Thanks — we’ll be in touch!';});
+
+  // ---- post: bloom + chromatic aberration + cinematic grade (core three.js) ----
+  let PP=true;
+  let rtScene,rtA,rtB, fsScene,fsCam,quad, brightMat,blurMat,compMat;
+  function ppRes(){return Math.min(devicePixelRatio,2);}
+  function makeRT(w,h){return new THREE.WebGLRenderTarget(w,h,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat});}
+  function initPP(){
+    try{
+      const dpr=ppRes(),fw=Math.floor(W*dpr),fh=Math.floor(H*dpr),hw=Math.max(2,fw>>1),hh=Math.max(2,fh>>1);
+      rtScene=makeRT(fw,fh);rtA=makeRT(hw,hh);rtB=makeRT(hw,hh);
+      fsScene=new THREE.Scene();fsCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+      quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),null);quad.frustumCulled=false;fsScene.add(quad);
+      const vert='varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}';
+      brightMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},threshold:{value:0.9}},vertexShader:vert,
+        fragmentShader:'uniform sampler2D tDiffuse;uniform float threshold;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(0.299,0.587,0.114));float f=smoothstep(threshold,threshold+0.18,l);gl_FragColor=vec4(c.rgb*f,c.a*f);}'});
+      blurMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},dir:{value:new THREE.Vector2()},res:{value:new THREE.Vector2(hw,hh)}},vertexShader:vert,
+        fragmentShader:'uniform sampler2D tDiffuse;uniform vec2 dir;uniform vec2 res;varying vec2 vUv;void main(){vec2 px=dir/res;vec4 s=texture2D(tDiffuse,vUv)*0.227027;s+=texture2D(tDiffuse,vUv+px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv-px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv+px*3.2308)*0.070270;s+=texture2D(tDiffuse,vUv-px*3.2308)*0.070270;gl_FragColor=s;}'});
+      compMat=new THREE.ShaderMaterial({transparent:true,uniforms:{tScene:{value:null},tBloom:{value:null},bloom:{value:0.26},ca:{value:0.0015}},vertexShader:vert,
+        fragmentShader:[
+          'uniform sampler2D tScene;uniform sampler2D tBloom;uniform float bloom;uniform float ca;varying vec2 vUv;',
+          'void main(){',
+          '  vec2 d=vUv-0.5;',
+          '  float r=texture2D(tScene,vUv+d*ca).r;',
+          '  float g=texture2D(tScene,vUv).g;',
+          '  float b=texture2D(tScene,vUv-d*ca).b;',
+          '  vec4 sc=texture2D(tScene,vUv);',
+          '  vec4 bl=texture2D(tBloom,vUv);',
+          '  vec3 col=vec3(r,g,b)+bl.rgb*bloom;',
+          '  float L=dot(col,vec3(0.299,0.587,0.114));',
+          '  col=mix(vec3(L),col,1.0);',           // neutral saturation (no over-pop)
+          '  col*=vec3(1.012,1.0,0.992);',         // very mild warmth
+          '  float vig=smoothstep(0.98,0.32,length(d));',
+          '  col*=mix(0.82,1.0,vig);',             // vignette (multiplicative — no transparent fringe)
+          '  float a=clamp(sc.a+bl.a*bloom,0.0,1.0);',
+          '  gl_FragColor=vec4(col,a);',
+          '}'].join('\n')});
+    }catch(e){PP=false;}
+  }
+  function resizePP(){if(!PP)return;const dpr=ppRes(),fw=Math.floor(W*dpr),fh=Math.floor(H*dpr),hw=Math.max(2,fw>>1),hh=Math.max(2,fh>>1);
+    rtScene.setSize(fw,fh);rtA.setSize(hw,hh);rtB.setSize(hw,hh);blurMat.uniforms.res.value.set(hw,hh);}
+  function ppPass(mat,target){quad.material=mat;renderer.setRenderTarget(target||null);renderer.clear();renderer.render(fsScene,fsCam);}
+  function renderPP(){
+    renderer.setRenderTarget(rtScene);renderer.clear();renderer.render(scene,camera);
+    brightMat.uniforms.tDiffuse.value=rtScene.texture;ppPass(brightMat,rtA);
+    blurMat.uniforms.tDiffuse.value=rtA.texture;blurMat.uniforms.dir.value.set(1,0);ppPass(blurMat,rtB);
+    blurMat.uniforms.tDiffuse.value=rtB.texture;blurMat.uniforms.dir.value.set(0,1);ppPass(blurMat,rtA);
+    blurMat.uniforms.tDiffuse.value=rtA.texture;blurMat.uniforms.dir.value.set(1,0);ppPass(blurMat,rtB);
+    blurMat.uniforms.tDiffuse.value=rtB.texture;blurMat.uniforms.dir.value.set(0,1);ppPass(blurMat,rtA);
+    compMat.uniforms.tScene.value=rtScene.texture;compMat.uniforms.tBloom.value=rtA.texture;
+    renderer.setRenderTarget(null);renderer.clear();quad.material=compMat;renderer.render(fsScene,fsCam);
+  }
+  initPP();
+
+  const DEMO=location.search.indexOf('demo')>=0;
+  const clock=new THREE.Clock();
+  function lerp(a,b,t){return a+(b-a)*t;}
+  function animate(){
+    requestAnimationFrame(animate);
+    const dt=Math.min(clock.getDelta(),0.045),t=clock.getElapsedTime();
+    if(DEMO){grabbed=2;pull=1.7;}   // force a dramatic pull so the headline shows through behind the lifted slice
+
+    // cursor follow
+    dx=lerp(dx,mx,0.2);dy=lerp(dy,my,0.2);
+    dot.style.left=mx+'px';dot.style.top=my+'px';
+    cutter.style.left=dx+'px';cutter.style.top=dy+'px';
+    cutlabel.style.left=dx+'px';cutlabel.style.top=dy+'px';
+    if(performance.now()-lastMoveT>60)wheelAngle*=0.92;
+    wheel.style.transform='rotate('+wheelAngle+'deg)';
+
+    // cinematic camera: slow dolly + gentle sway + mouse parallax
+    camera.position.x=lerp(camera.position.x, camBase.x+Math.sin(t*0.12)*0.45+camPX, 0.06);
+    camera.position.y=lerp(camera.position.y, camBase.y+Math.sin(t*0.17)*0.16+camPY, 0.06);
+    camera.position.z=lerp(camera.position.z, camBase.z+Math.cos(t*0.10)*0.42, 0.06);
+    camera.lookAt(camLook);
+
+    pizza.rotation.y+=dt*0.12*(grabbed>=0?0.04:1);
+    pizzaWrap.rotation.y=lerp(pizzaWrap.rotation.y,pYaw,0.05);
+    pizzaWrap.rotation.x=lerp(pizzaWrap.rotation.x,pPit,0.05);
+    const bob=Math.sin(t*0.85)*0.09;pizza.position.y=0.14+bob;
+    shadow.material.opacity=0.92-bob*0.6;shadow.scale.setScalar(1.0+bob*0.16);
+
+    const s=scrollP;
+    sceneEl.style.opacity=(1-s*1.15).toFixed(3);
+    pizzaWrap.position.y=lerp(0,2.2,s);boardWrap.position.y=lerp(0,2.2,s);
+    const sc=lerp(1,0.7,s);pizzaWrap.scale.setScalar(sc);boardWrap.scale.setScalar(sc);
+    document.getElementById('scrollhint').style.opacity=(1-s*2).toFixed(2);
+
+    if(s<0.85){ray.setFromCamera(mouse,camera);
+      const ms=[];slices.forEach(g=>g.children.forEach(c=>{if(c.userData&&c.userData.si!==undefined)ms.push(c);}));
+      const hit=ray.intersectObjects(ms,false);hovered=hit.length?hit[0].object.userData.si:-1;
+    }else hovered=-1;
+    const overPizza=(hovered>=0||grabbed>=0);
+    cutter.classList.toggle('show', overPizza && !isTouch);
+    cutlabel.classList.toggle('show', overPizza && !isTouch);
+
+    // slice spring physics
+    let activeSlice=null;
+    slices.forEach(g=>{
+      let tgt=0;
+      if(g.userData.i===grabbed){tgt=pull;activeSlice=g;}
+      else if(g.userData.i===hovered && grabbed<0){tgt=0.14;}
+      const k=140, damp=Math.pow(0.0008,dt);
+      g.userData.vel+=(tgt-g.userData.lift)*k*dt;
+      g.userData.vel*=damp;
+      g.userData.lift+=g.userData.vel*dt;
+      if(g.userData.lift<0){g.userData.lift=0;g.userData.vel*=-0.3;}
+      const L=g.userData.lift;
+      g.position.x=g.userData.dir.x*L*PULL_OUT;
+      g.position.z=g.userData.dir.z*L*PULL_OUT;
+      g.position.y=L*PULL_UP;
+    });
+    updateStrands(activeSlice,t);
+
+    puffs.forEach(p=>{p.position.y+=dt*p.userData.sp;
+      const life=(p.position.y-0.55)/3.0;
+      p.position.x+=Math.sin(t*0.6+p.userData.ph)*p.userData.amp*dt;
+      p.position.z+=Math.cos(t*0.5+p.userData.ph*1.3)*p.userData.amp*dt;
+      p.material.opacity=Math.max(0, Math.sin(Math.min(1,life)*Math.PI)*0.14 )*(1-s)*(1+(grabbed>=0?0.8:0));
+      const sz=1.6+life*2.6;p.scale.set(sz,sz,1);
+      p.material.rotation=(p.userData.base*6.28)+t*0.12;
+      if(p.position.y>3.7){p.position.y=0.55;p.position.x=(Math.random()-0.5)*3.2;p.position.z=(Math.random()-0.5)*3.2;}});
+
+    if(PP){try{renderPP();}catch(e){PP=false;renderer.setRenderTarget(null);renderer.render(scene,camera);}}
+    else{renderer.setRenderTarget(null);renderer.render(scene,camera);}
+  }
+  animate();
+
+  // loader — holds until the hero photo is ready, then reveals the type
+  let prog=0;const lb=document.getElementById('loadbar'),ln=document.getElementById('loadnum');
+  let revealed=false;
+  function revealType(){if(revealed)return;revealed=true;
+    document.getElementById('load').classList.add('hide');
+    document.querySelectorAll('.hero-type .l').forEach((el,i)=>{el.style.transition='transform 1s cubic-bezier(.2,.9,.2,1) '+(0.1+i*0.12)+'s, opacity 1s '+(0.1+i*0.12)+'s';el.style.transform='translateY(0)';el.style.opacity='1';});}
+  const li=setInterval(()=>{
+    const cap=(photoReady?100:92);
+    prog=Math.min(cap,prog+Math.random()*16);
+    lb.style.width=prog+'%';ln.textContent=Math.floor(prog);
+    if(prog>=100){clearInterval(li);setTimeout(revealType,320);}
+  },120);
+  setTimeout(()=>{ if(!revealed){prog=100;lb.style.width='100%';ln.textContent='100';setTimeout(revealType,200);} },5000); // safety
+
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');}),{threshold:0.15});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(i%5*0.08)+'s';io.observe(el);});
+})();
+</script>
+</body>
+</html>
