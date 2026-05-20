@@ -367,6 +367,44 @@
   // crust (clean baked block) / tomato sauce / melted-cheese body — gives a real layered cross-section on the cut
   const cheeseSideMat=new THREE.MeshStandardMaterial({color:0xe9b24c,roughness:0.46,metalness:0.0,envMapIntensity:1.05});
   const D1=0.30, D2=0.07, D3=0.13, THICK=D1+D2+D3;
+  // NOTE on convention: the extruded wedge body maps shape angle a -> world (cos a, -sin a).
+  // So EVERYTHING that must ride with the wedge (cornicione, pull dir, cheese strands, drips)
+  // uses the SAME z = -sin(a) mapping below. This is what makes the crust + cheese pull with the slice.
+
+  // hot melted-mozzarella look shared by strands + drips
+  const dripMat=new THREE.MeshStandardMaterial({color:0xf0c558,roughness:0.36,metalness:0.0,emissive:0x2a1c06,emissiveIntensity:0.30,envMapIntensity:1.12});
+
+  // variable-radius tube builder: lets strands neck/thin in the middle and drips bulb then taper to a tip
+  function makeTube(points,radiusFn,samples,radial){
+    samples=samples||Math.max(8,points.length*4); radial=radial||6;
+    const curve=new THREE.CatmullRomCurve3(points);
+    const frames=curve.computeFrenetFrames(samples,false);
+    const pts=curve.getPoints(samples);
+    const pos=[],nor=[],idx=[];
+    for(let i=0;i<=samples;i++){const tt=i/samples,P=pts[i],N=frames.normals[i],B=frames.binormals[i];
+      const r=Math.max(0.0,radiusFn(tt));
+      for(let j=0;j<=radial;j++){const v=j/radial*TAU,cs=Math.cos(v),sn=Math.sin(v);
+        const nx=cs*N.x+sn*B.x,ny=cs*N.y+sn*B.y,nz=cs*N.z+sn*B.z;
+        pos.push(P.x+r*nx,P.y+r*ny,P.z+r*nz);nor.push(nx,ny,nz);}}
+    for(let i=1;i<=samples;i++)for(let j=1;j<=radial;j++){const a=(radial+1)*(i-1)+(j-1),b=(radial+1)*i+(j-1),c=(radial+1)*i+j,d=(radial+1)*(i-1)+j;idx.push(a,b,d,b,c,d);}
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));
+    g.setIndex(idx);return g;}
+
+  // one cheese drip draping over the puffy crust rim at world angle a (built once, rides with its slice)
+  function buildRimDrip(a){
+    const Rc=RADIUS*0.985, topY=THICK*0.66;
+    const dx=Math.cos(a),dz=-Math.sin(a);                       // SAME -sin convention as the wedge body
+    const hang=0.14+Math.random()*0.30, out=0.10+Math.random()*0.12, fat=0.75+Math.random()*0.8;
+    const p=[
+      new THREE.Vector3(dx*Rc*0.92, THICK*0.97, dz*Rc*0.92),    // starts in the cheese pool
+      new THREE.Vector3(dx*(Rc+0.05), topY+0.06, dz*(Rc+0.05)), // over the rim shoulder
+      new THREE.Vector3(dx*(Rc+out), topY-0.12, dz*(Rc+out)),
+      new THREE.Vector3(dx*(Rc+out+0.03), -hang, dz*(Rc+out+0.03))]; // droops down the outside
+    const rfn=t=>Math.max(0.004,(0.045+0.022*Math.sin(t*Math.PI))*fat*(1-Math.pow(t,5)));
+    const m=new THREE.Mesh(makeTube(p,rfn,16,7),dripMat);
+    m.castShadow=true;m.receiveShadow=true;return m;}
   // deterministic surface relief (function of x,z only) → adjacent wedges + photo-skin line up perfectly
   function reliefY(x,z){const rad=Math.hypot(x,z);const f=Math.min(1,rad/RADIUS);
     const crown=(1-f)*0.06;                                        // gentle dome through the middle
@@ -377,7 +415,7 @@
   function buildCornicione(i,a0,a1){
     const segs=Math.max(8,Math.round((a1-a0)/TAU*72));
     const Rc=RADIUS*0.985, topY=THICK*0.66, pathPts=[];
-    for(let s=0;s<=segs;s++){const a=a0+(a1-a0)*s/segs;pathPts.push(new THREE.Vector3(Math.cos(a)*Rc,topY,Math.sin(a)*Rc));}
+    for(let s=0;s<=segs;s++){const a=a0+(a1-a0)*s/segs;pathPts.push(new THREE.Vector3(Math.cos(a)*Rc,topY,-Math.sin(a)*Rc));}
     const geo=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pathPts),segs,0.205,14,false);
     const pos=geo.attributes.position,nor=geo.attributes.normal;   // irregular blistered silhouette (not a smooth cylinder)
     for(let v=0;v<pos.count;v++){const x=pos.getX(v),y=pos.getY(v),z=pos.getZ(v);
@@ -413,64 +451,89 @@
 
     const corn=buildCornicione(i,a0,a1);           // raised baked rim, pulls out with the wedge
     const g=new THREE.Group();g.add(dough);g.add(sauce);g.add(cheeseBody);g.add(cheese);g.add(corn);
-    g.userData={i,a0,a1,mid:(a0+a1)/2,dir:new THREE.Vector3(Math.cos((a0+a1)/2),0,Math.sin((a0+a1)/2)),lift:0,vel:0};
+    // gooey mozzarella drips draping over this wedge's outer crust rim (always visible -> hot, oozing edges)
+    const nDrips=3+Math.floor(Math.random()*2);
+    for(let dN=0;dN<nDrips;dN++){const fa=(dN+0.5+(Math.random()-0.5)*0.6)/nDrips;
+      const fac=0.14+0.72*Math.min(1,Math.max(0,fa));
+      const dm=buildRimDrip(a0+(a1-a0)*fac); if(dm)g.add(dm);}
+    // dir uses -sin to MATCH the extruded wedge body -> a pulled slice travels truly radially outward
+    g.userData={i,a0,a1,mid:(a0+a1)/2,dir:new THREE.Vector3(Math.cos((a0+a1)/2),0,-Math.sin((a0+a1)/2)),lift:0,vel:0};
     return g;
   }
   for(let i=0;i<SLICES;i++){const s=buildSlice(i);pizza.add(s);slices.push(s);}
   pizza.rotation.x=0.52;pizza.position.y=0.14;  // POSITIVE tilt → top toward the viewer (more oblique 3/4)
 
-  // ---- cheese pull strands (signature) — real 3D tubes that stretch from the cut edges ----
-  const STRANDS_PER_EDGE=6, PTS=24;
+  // ---- cheese pull strands (signature) — real 3D tubes that STICK at both ends and stretch ----
+  // bridge strands: one end anchored to the neighbour/gap cut edge (stationary), other end to the
+  //   pulled wedge's cut edge -> they get longer + thinner (neck) as the slice travels, then snap.
+  // sag strands: cheese clinging off the pulled wedge's exposed cut face, drooping down (drip).
+  const PTS=18, NB=6, NS=2;                                       // bridges + sag-drips per edge
   const strandMatBase=new THREE.MeshStandardMaterial({color:0xf2c45a,roughness:0.34,metalness:0.0,emissive:0x281a05,emissiveIntensity:0.35,envMapIntensity:1.1,transparent:true,opacity:0});
   const cheeseStrands=[];
-  function makeStrand(){
+  function makeStrand(type,edge){
     const mat=strandMatBase.clone();
     const mesh=new THREE.Mesh(new THREE.BufferGeometry(),mat);mesh.frustumCulled=false;mesh.visible=false;mesh.castShadow=false;pizza.add(mesh);
-    return {mesh,mat,
-      posR:0.14+Math.random()*0.62,        // random attach radius along the cut edge → irregular spacing
-      thick:0.42+Math.random()*1.15,       // per-strand thickness
-      breakL:1.5+Math.random()*1.7,        // each strand snaps at its own length
-      att:0.56+Math.random()*0.34,         // attach height on the cut face
-      curl:(Math.random()-0.5)*0.34,
-      sagK:0.55+Math.random()*0.85,
+    return {mesh,mat,type,edge,
+      posR:0.18+Math.random()*0.62,        // attach radius along the cut edge → irregular spacing
+      attF:0.22+Math.random()*0.72,        // height fraction WITHIN the cheese layer (not the bottom)
+      thick:0.55+Math.random()*1.05,       // per-strand thickness
+      breakL:1.5+Math.random()*1.9,        // each strand snaps at its own length
+      curl:(Math.random()-0.5)*0.42,
+      sagK:0.5+Math.random()*0.85,
       ph:Math.random()*6.28,
-      jit:(Math.random()-0.5)*0.05,
-      wisp:Math.random()<0.28};            // a few thin wisps
+      jit:(Math.random()-0.5)*0.06,
+      hang:0.20+Math.random()*0.34,
+      wisp:type==='bridge'&&Math.random()<0.30};
   }
-  for(let s=0;s<STRANDS_PER_EDGE*2;s++)cheeseStrands.push(makeStrand());
+  for(let e=0;e<2;e++){
+    for(let k=0;k<NB;k++)cheeseStrands.push(makeStrand('bridge',e));
+    for(let k=0;k<NS;k++)cheeseStrands.push(makeStrand('sag',e));
+  }
 
   function updateStrands(slice,t){
-    if(!slice){cheeseStrands.forEach(s=>{s.mesh.visible=false;});return;}
-    const L=slice.userData.lift;
-    const off=new THREE.Vector3(slice.userData.dir.x*L*PULL_OUT, L*PULL_UP, slice.userData.dir.z*L*PULL_OUT);
-    const fade=Math.min(1,Math.max(0,(L-0.05)/0.26));
-    const tang=new THREE.Vector3(-slice.userData.dir.z,0,slice.userData.dir.x);
+    if(!slice){for(const s of cheeseStrands)s.mesh.visible=false;return;}
+    const L=slice.userData.lift, d=slice.userData.dir;
+    const off=new THREE.Vector3(d.x*L*PULL_OUT, L*PULL_UP, d.z*L*PULL_OUT); // pulled-wedge displacement
+    const fade=Math.min(1,Math.max(0,(L-0.12)/0.22));
     const edges=[slice.userData.a0, slice.userData.a1];
-    let idx=0;
-    for(let e=0;e<2;e++){
-      const ang=edges[e];
-      for(let k=0;k<STRANDS_PER_EDGE;k++){
-        const st=cheeseStrands[idx++];
-        const snap=Math.max(0,Math.min(1,1-(L-st.breakL)/0.7));  // each strand breaks at its own length
-        if(L<0.05||snap<=0.02){st.mesh.visible=false;continue;}
-        const rr=RADIUS*st.posR+st.jit;
-        const A=new THREE.Vector3(Math.cos(ang)*rr, THICK*st.att, Math.sin(ang)*rr);
-        const B=A.clone().add(off);
-        const sag=Math.min(1.8, L*0.95)*st.sagK;
+    const cheeseLo=D1+D2, cheeseHi=THICK;                          // strands originate in the cheese layer
+    for(const s of cheeseStrands){
+      const ang=edges[s.edge];
+      const tang=new THREE.Vector3(-Math.sin(ang),0,-Math.cos(ang)); // horizontal, along the cut edge
+      const rr=RADIUS*s.posR+s.jit;
+      const attY=cheeseLo+(cheeseHi-cheeseLo)*s.attF;
+      const A=new THREE.Vector3(Math.cos(ang)*rr, attY, -Math.sin(ang)*rr); // rest = neighbour's cut edge
+      if(s.type==='bridge'){
+        const snap=Math.max(0,Math.min(1,1-(L-s.breakL)/0.6));
+        if(L<0.12||snap<=0.02){s.mesh.visible=false;continue;}
+        const B=A.clone().add(off);                                // pulled wedge's cut edge (moved)
+        const stretch=Math.max(0,Math.min(1,(L-0.3)/1.4));
+        const sag=Math.min(1.7,L*0.95)*s.sagK;
         const pts=[];
-        for(let p=0;p<PTS;p++){const tt=p/(PTS-1);const env=Math.sin(Math.PI*tt);
-          const curlAmt=st.curl*env*(0.5+0.5*Math.sin(t*2+st.ph));
+        for(let p=0;p<PTS;p++){const tt=p/(PTS-1),env=Math.sin(Math.PI*tt);
+          const cz=s.curl*env*(0.5+0.5*Math.sin(t*2+s.ph));
           pts.push(new THREE.Vector3(
-            A.x+(B.x-A.x)*tt + tang.x*curlAmt,
-            A.y+(B.y-A.y)*tt - env*sag,
-            A.z+(B.z-A.z)*tt + tang.z*curlAmt));}
-        const curve=new THREE.CatmullRomCurve3(pts);
-        const base=st.wisp?0.026:0.085;                          // thin wisps vs full strands
-        const rad=Math.max(0.009,(base*st.thick - L*0.014));     // varied thickness, necks/thins as it stretches
-        const old=st.mesh.geometry;
-        st.mesh.geometry=new THREE.TubeGeometry(curve,24,rad,st.wisp?5:7,false);
-        if(old)old.dispose();
-        st.mat.opacity=0.96*fade*snap; st.mesh.visible=true;
+            A.x+(B.x-A.x)*tt+tang.x*cz,
+            A.y+(B.y-A.y)*tt-env*sag,
+            A.z+(B.z-A.z)*tt+tang.z*cz));}
+        const globalThin=Math.max(0.25,1-L*0.16);
+        const baseR=(s.wisp?0.022:0.075)*s.thick*globalThin*Math.sqrt(snap);
+        const rfn=tt=>{const ends=0.5+0.5*Math.abs(2*tt-1);const neck=1-0.55*Math.sin(Math.PI*tt)*stretch;return Math.max(0.006,baseR*ends*neck);};
+        const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,PTS-1,s.wisp?5:6);if(old)old.dispose();
+        s.mat.opacity=0.97*fade*snap; s.mesh.visible=true;
+      } else {                                                     // sag-drip off the exposed cut face
+        if(L<0.22){s.mesh.visible=false;continue;}
+        const top=A.clone().add(off);
+        const grow=Math.min(1,(L-0.22)/1.0);
+        const hang=s.hang*(0.55+0.95*grow);
+        const pts=[
+          top.clone(),
+          new THREE.Vector3(top.x+tang.x*s.curl*0.30-d.x*0.02, top.y-hang*0.45, top.z+tang.z*s.curl*0.30-d.z*0.02),
+          new THREE.Vector3(top.x+tang.x*s.curl*0.50-d.x*0.05, top.y-hang*0.95, top.z+tang.z*s.curl*0.50-d.z*0.05)];
+        const fat=s.thick;
+        const rfn=tt=>Math.max(0.005,(0.04+0.03*Math.sin(tt*Math.PI))*fat*(1-Math.pow(tt,4)));
+        const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,12,6);if(old)old.dispose();
+        s.mat.opacity=0.95*Math.min(1,fade+0.2)*grow; s.mesh.visible=true;
       }
     }
   }
@@ -593,7 +656,7 @@
   function animate(){
     requestAnimationFrame(animate);
     const dt=Math.min(clock.getDelta(),0.045),t=clock.getElapsedTime();
-    if(DEMO){grabbed=2;pull=1.7;}   // force a dramatic pull so the headline shows through behind the lifted slice
+    if(DEMO){grabbed=6;pull=1.55;}   // pull a FRONT wedge toward the camera: shows crust+cheese-pull+drips clearly
 
     // cursor follow
     dx=lerp(dx,mx,0.2);dy=lerp(dy,my,0.2);
@@ -667,6 +730,9 @@
   function revealType(){if(revealed)return;revealed=true;
     document.getElementById('load').classList.add('hide');
     document.querySelectorAll('.hero-type .l').forEach((el,i)=>{el.style.transition='transform 1s cubic-bezier(.2,.9,.2,1) '+(0.1+i*0.12)+'s, opacity 1s '+(0.1+i*0.12)+'s';el.style.transform='translateY(0)';el.style.opacity='1';});}
+  // static-capture modes (?demo / ?shot) skip the loader so screenshots aren't caught mid-fade
+  const SHOT=location.search.indexOf('shot')>=0;
+  if(DEMO||SHOT){revealType();}
   const li=setInterval(()=>{
     const cap=(photoReady?100:92);
     prog=Math.min(cap,prog+Math.random()*16);
