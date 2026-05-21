@@ -394,13 +394,12 @@
   // through via the low opacity.
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xffffff, metalness:0.0, roughness:0.015,             // optically sharp
-        transmission:1.0, ior:1.52, thickness:1.0,                  // clear body + a touch more lens distortion of the text behind
-        transparent:true,
-        clearcoat:0.15, clearcoatRoughness:0.12,                     // MINIMAL lacquer -> kills the broad pink surface veil; body goes truly clear (blends into the orange, text refracts crisply)
-        attenuationColor:new THREE.Color(0xfff2e6), attenuationDistance:40.0,  // near-zero tint
-        specularIntensity:0.6,                                       // softer surface specular -> not a sheet
-        envMapIntensity:0.6,                                         // gentle studio reflections only at grazing angles
+        color:0xffe6cf, metalness:0.0, roughness:0.05,
+        transmission:0.0, transparent:true, opacity:0.4,            // ALPHA-BLEND, not scene-transmission -> the black text behind stays CRISP (transmission was averaging bg+text into salmon/grey)
+        ior:1.5, reflectivity:0.6,
+        clearcoat:1.0, clearcoatRoughness:0.04,                      // hard glossy lacquer
+        specularIntensity:1.0,
+        envMapIntensity:1.7,                                         // bright studio streak reflections = polished-glass gloss (the main glass cue now)
         emissive:0x000000, emissiveIntensity:0.0 })
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
