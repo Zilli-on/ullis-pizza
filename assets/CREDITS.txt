@@ -1,3 +1,30 @@
-Asset credits for Ullis Pizza
-- Pizza top texture: "All Good pizza" by Dale Cruse (San Francisco, CA, USA), CC BY 2.0, via Wikimedia Commons. https://commons.wikimedia.org/wiki/File:All_Good_pizza_(38501728345).jpg
-- Environment lighting: "brown_photostudio_02" from Poly Haven, CC0. https://polyhaven.com/a/brown_photostudio_02
+ULLIS PIZZA - ASSET CREDITS
+===========================
+
+REAL PBR FOOD TEXTURES (R8 photoreal overhaul)
+----------------------------------------------
+Source asset : "Pizza002" - https://ambientcg.com/view?id=Pizza002
+Author       : ambientCG (Lennart Demes / Struffel Productions)
+License      : CC0 1.0 (Public Domain) - no login, no attribution required (credited voluntarily)
+Downloaded   : Pizza002_1K-JPG.zip (1024px PBR set), then optimized/resized for the web.
+
+Derived files used on the site:
+  cap_color.jpg   1024px  ~187 KB  (Color / albedo - melted cheese, sauce, mozzarella, basil)
+  cap_normal.jpg  1024px  ~139 KB  (NormalGL - real surface microrelief)
+  cap_rough.jpg    512px   ~43 KB  (Roughness - greasy/oily wet variance)
+  cap_ao.jpg       512px   ~55 KB  (Ambient Occlusion - contact shadow in the gaps)
+  cap_disp.jpg     512px   ~22 KB  (Displacement / height - drives real vertex relief on the cap)
+  crust_color.jpg  512px   ~30 KB  (Charred-crust albedo cropped from Pizza002 Color, cornicione, mirror-tiled)
+
+ENVIRONMENT LIGHTING
+--------------------
+studio_env_2k.jpg : "brown_photostudio_02" - https://polyhaven.com/a/brown_photostudio_02
+Author  : Poly Haven (Greg Zaal / Sergej Majboroda)
+License : CC0 1.0 (Public Domain)
+
+LEGACY (retained, no longer referenced by the page)
+---------------------------------------------------
+pizza_top.jpg : "All Good pizza" by Dale Cruse (San Francisco) - CC BY 2.0 (Wikimedia Commons)
+  https://commons.wikimedia.org/wiki/File:All_Good_pizza_(38501728345).jpg
+
+All real assets above are CC0/public-domain and were obtained from login-free direct downloads.
