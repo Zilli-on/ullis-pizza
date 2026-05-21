@@ -371,13 +371,13 @@
   // Mobile/LOW: lighter translucent reflective amber (NO transmission) -> env reflection + clearcoat carry the glass read.
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xfff7ec, metalness:0.0, roughness:0.018,        // near-optically-clear hand-cut crystal
+        color:0xfff7ec, metalness:0.0, roughness:0.015,        // near-optically-clear hand-cut crystal
         transmission:1.0, ior:1.5, thickness:1.18,             // full transmission + thicker body -> the headline behind bends/lenses elegantly through the glass
-        attenuationColor:new THREE.Color(0xff9a55), attenuationDistance:6.5,  // warm tint, long distance = luminous & clear, never grey
-        clearcoat:1.0, clearcoatRoughness:0.025,
-        iridescence:0.05, iridescenceIOR:1.25, iridescenceThicknessRange:[160,420], // whisper of sparkle only (no milky film)
-        specularIntensity:1.0, specularColor:new THREE.Color(0xfff3e0),
-        envMapIntensity:1.15, emissive:0x2a1206, emissiveIntensity:0.05 })  // restrained env reflection (no blown-out white haze) -> clear refractive crystal
+        attenuationColor:new THREE.Color(0xff9a55), attenuationDistance:7.5,  // warm tint, long distance = luminous & clear, never grey
+        clearcoat:0.35, clearcoatRoughness:0.09,               // light lacquer only -> NO bright mirror sheet across the face (that white sheen was hiding the glass)
+        iridescence:0.04, iridescenceIOR:1.25, iridescenceThicknessRange:[160,420], // whisper of sparkle only (no milky film)
+        specularIntensity:0.45, specularColor:new THREE.Color(0xfff3e0),  // softened specular -> face stays see-through, not a cream sheet
+        envMapIntensity:0.55, emissive:0x1a0b04, emissiveIntensity:0.035 })  // low env reflection -> you look THROUGH the crystal to the distorted type
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
         transmission:0.0, ior:1.46, transparent:true, opacity:0.58,   // lighter translucent amber glass for mobile
