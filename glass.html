@@ -308,13 +308,13 @@
   // ---- lighting: HDRI environment carries reflections; a few shaping lights on top ----
   scene.add(new THREE.AmbientLight(0xffe9d6,0.16));   // lower ambient -> contrast returns so the glossy glints read
   scene.add(new THREE.HemisphereLight(0xffe2c2,0xff5a1f,0.18));  // gentle orange world bounce
-  const key=new THREE.DirectionalLight(0xfff1dc,1.7);key.position.set(5.0,12.5,6.8);scene.add(key);
-  const fill=new THREE.DirectionalLight(0xffd0a0,0.40);fill.position.set(-6,4.5,4.5);scene.add(fill);
-  const rim=new THREE.DirectionalLight(0xffca6a,1.0);rim.position.set(-4,5.0,-7);scene.add(rim);   // gold back-rim -> precious edge glow
-  const goldBack=new THREE.SpotLight(0xffb851,0.58,40,0.9,0.6);goldBack.position.set(2.5,-3,-6);scene.add(goldBack);  // faint up-light catches cut faces
-  const warm=new THREE.PointLight(0xffc488,0.28,40);warm.position.set(3,3.2,5);scene.add(warm);
-  const spec=new THREE.PointLight(0xfffaf0,1.8,26);spec.position.set(1.2,5.2,3.6);scene.add(spec);   // crisp jewel highlight (bright)
-  const glint=new THREE.PointLight(0xffffff,1.5,30);glint.position.set(-3.2,3.6,5.2);scene.add(glint);  // 2nd hard white glint -> glossy specular as it rotates
+  const key=new THREE.DirectionalLight(0xfff1dc,0.55);key.position.set(5.0,12.5,6.8);scene.add(key);   // dim broad key -> no surface veil; transmission (text) dominates
+  const fill=new THREE.DirectionalLight(0xffd0a0,0.22);fill.position.set(-6,4.5,4.5);scene.add(fill);
+  const rim=new THREE.DirectionalLight(0xffca6a,0.45);rim.position.set(-4,5.0,-7);scene.add(rim);   // gentle back-rim edge
+  const goldBack=new THREE.SpotLight(0xffb851,0.35,40,0.9,0.6);goldBack.position.set(2.5,-3,-6);scene.add(goldBack);
+  const warm=new THREE.PointLight(0xffc488,0.18,40);warm.position.set(3,3.2,5);scene.add(warm);
+  const spec=new THREE.PointLight(0xfffaf0,1.1,18);spec.position.set(1.2,5.2,3.6);scene.add(spec);   // ONE small concentrated crisp glint
+  const glint=new THREE.PointLight(0xffffff,0.7,16);glint.position.set(-3.2,3.6,5.2);scene.add(glint);  // small secondary glint as it rotates
 
   // procedural fallback environment (used until / unless the HDRI loads) — warm orange studio
   (function setupEnvFallback(){
@@ -380,7 +380,7 @@
         color:0xffffff, metalness:0.0, roughness:0.012,             // optically sharp -> crisp glossy glints + clear refraction
         transmission:1.0, ior:1.5, thickness:0.7,                   // CLEAR thin crystal -> text reads true through it (not absorbed to grey)
         transparent:true,
-        clearcoat:1.0, clearcoatRoughness:0.02,                      // hard glossy lacquer sheen (the gloss = crisp point-light glints, not env wash)
+        clearcoat:0.55, clearcoatRoughness:0.04,                     // lighter lacquer -> less surface veil, the text reads clearly through
         attenuationColor:new THREE.Color(0xffeede), attenuationDistance:40.0,  // almost no tint -> clear glass, not a pink milky wash
         specularIntensity:1.0,
         envMapIntensity:0.45,                                        // LOW env -> kills the uniform milky wash; gloss comes from the bright point-light glints
