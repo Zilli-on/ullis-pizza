@@ -4,8 +4,47 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
 <meta name="theme-color" content="#F5430B" />
-<link rel="icon" href="data:," />
-<title>ULLIS PIZZA — Pizza Passion Precision</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%95%3C/text%3E%3C/svg%3E" />
+
+<!-- ============ SEO ============ -->
+<title>Ullis Pizza — Pizza. Passion. Precision. | Handcrafted Pepperoni</title>
+<meta name="description" content="Ullis Pizza — handcrafted pepperoni pizza by maestro Ulli Haus. Pizza. Passion. Precision. Step into an immersive 3D pizza experience: slice it, see the cheese pull, taste the craft." />
+<meta name="keywords" content="Ullis Pizza, Pizza, Pepperoni Pizza, Ulli Haus, Pizzeria, handcrafted pizza, Pizza Passion Precision, immersive pizza, 3D pizza, artisan pizza" />
+<meta name="author" content="Ullis Pizza" />
+<meta name="robots" content="index, follow, max-image-preview:large" />
+<link rel="canonical" href="https://zilli-on.github.io/ullis-pizza/" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Ullis Pizza" />
+<meta property="og:title" content="Ullis Pizza — Pizza. Passion. Precision." />
+<meta property="og:description" content="Handcrafted pepperoni pizza by maestro Ulli Haus. An immersive 3D pizza experience — slice it and watch the cheese pull." />
+<meta property="og:url" content="https://zilli-on.github.io/ullis-pizza/" />
+<meta property="og:image" content="https://zilli-on.github.io/ullis-pizza/assets/pizza_top.jpg" />
+<meta property="og:image:alt" content="Top-down handcrafted pepperoni pizza — Ullis Pizza" />
+<meta property="og:locale" content="en" />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Ullis Pizza — Pizza. Passion. Precision." />
+<meta name="twitter:description" content="Handcrafted pepperoni pizza by maestro Ulli Haus. An immersive 3D pizza experience." />
+<meta name="twitter:image" content="https://zilli-on.github.io/ullis-pizza/assets/pizza_top.jpg" />
+
+<!-- Structured data (Restaurant). TODO Fabi: add real address/telephone/openingHours/menu URL for full local-SEO rich results. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Restaurant",
+  "name": "Ullis Pizza",
+  "description": "Handcrafted pepperoni pizza by maestro Ulli Haus. Pizza. Passion. Precision.",
+  "url": "https://zilli-on.github.io/ullis-pizza/",
+  "image": "https://zilli-on.github.io/ullis-pizza/assets/pizza_top.jpg",
+  "servesCuisine": ["Pizza", "Italian"],
+  "slogan": "Pizza. Passion. Precision.",
+  "founder": { "@type": "Person", "name": "Ulli Haus", "jobTitle": "Pizza Maestro" }
+}
+</script>
+<!-- ========== /SEO ========== -->
 <!--
   Asset credits (see assets/CREDITS.txt):
   - Pizza cap + crust PBR (cap_color/normal/rough/ao/disp, crust_color): "Pizza002" by ambientCG, CC0 (public domain).
@@ -373,21 +412,27 @@
     tex.encoding=THREE.sRGBEncoding; tex.anisotropy=8;
     cheeseMat.map=tex; cheeseMat.color.setHex(0xffffff); cheeseMat.needsUpdate=true; photoReady=true;
   }, undefined, function(){photoReady=true;});
+  // DISABLED: these measured relief maps are the leftover MARGHERITA (Pizza002) set -> they mismatch the pepperoni photo.
+  // Coherent pepperoni-aware relief is now derived from the actual photo by deriveFromPhoto() below (re-enabled).
+  if(false){
   texLoader.load('assets/cap_normal.jpg', function(tex){
     tex.anisotropy=4; cheeseMat.normalMap=tex; cheeseMat.normalScale=new THREE.Vector2(1.05,1.05); cheeseMat.needsUpdate=true;
   });
   texLoader.load('assets/cap_rough.jpg', function(tex){
-    tex.anisotropy=2; cheeseMat.roughnessMap=tex; cheeseMat.roughness=1.0; cheeseMat.needsUpdate=true;   // real greasy/oily variance
+    tex.anisotropy=2; cheeseMat.roughnessMap=tex; cheeseMat.roughness=1.0; cheeseMat.needsUpdate=true;
   });
   texLoader.load('assets/cap_ao.jpg', function(tex){
-    tex.anisotropy=2; cheeseMat.aoMap=tex; cheeseMat.aoMapIntensity=1.0; cheeseMat.needsUpdate=true;     // baked contact shadow in the gaps
+    tex.anisotropy=2; cheeseMat.aoMap=tex; cheeseMat.aoMapIntensity=1.0; cheeseMat.needsUpdate=true;
   });
   texLoader.load('assets/cap_disp.jpg', function(tex){
-    tex.anisotropy=2; cheeseMat.displacementMap=tex; cheeseMat.displacementScale=0.108; cheeseMat.displacementBias=-0.050; cheeseMat.needsUpdate=true;  // REAL relief: mozzarella blobs stand proud, sauce recedes (deeper -> more dimensional, less sticker)
+    tex.anisotropy=2; cheeseMat.displacementMap=tex; cheeseMat.displacementScale=0.108; cheeseMat.displacementBias=-0.050; cheeseMat.needsUpdate=true;
   });
+  }
 
-  // R8: derive-from-photo pipeline DISABLED — genuine measured PBR maps are loaded above instead (kept for reference).
-  (function deriveFromPhoto(){ return;
+  // RE-ENABLED (r14): derive COHERENT, pepperoni-aware PBR (albedo/roughness/normal/AO/height) from the real pepperoni photo
+  // -> relief actually matches the pepperoni (toppings proud, sauce-gaps + char recede) = much more REAL than the mismatched margherita maps.
+  (function deriveFromPhoto(){
+
     const img=new Image(); img.crossOrigin='anonymous';
     img.onload=function(){ try{
       const S=Q.deriveS;
@@ -437,11 +482,11 @@
       const aoTex=new THREE.CanvasTexture(aoc);aoTex.anisotropy=4;
       cheeseMat.map=albedo;
       cheeseMat.roughnessMap=roughTex;cheeseMat.roughness=0.92;
-      cheeseMat.normalMap=normalTex;cheeseMat.normalScale=new THREE.Vector2(0.92,0.92);   // tamer surface relief
+      cheeseMat.normalMap=normalTex;cheeseMat.normalScale=new THREE.Vector2(1.18,1.18);   // stronger surface relief -> more real, dimensional cheese/toppings
       cheeseMat.aoMap=aoTex;cheeseMat.aoMapIntensity=1.0;
       // REAL relief: drive vertex displacement on the tessellated cap from the same height field (R7: subtle, realistic)
       const heightTex=new THREE.CanvasTexture(hc);heightTex.anisotropy=2;
-      cheeseMat.displacementMap=heightTex;cheeseMat.displacementScale=0.062;cheeseMat.displacementBias=-0.018;
+      cheeseMat.displacementMap=heightTex;cheeseMat.displacementScale=0.092;cheeseMat.displacementBias=-0.026;
       cheeseMat.needsUpdate=true; photoReady=true;
 
       // ---- detect pepperoni discs from the photo → real raised meshes parented to each wedge ----
