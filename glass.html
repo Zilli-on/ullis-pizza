@@ -275,7 +275,7 @@
   renderer.setClearColor(new THREE.Color(0xf5430b),1);
   renderer.shadowMap.enabled=false;                 // glass is ethereal; grounding handled by a soft contact-shadow sprite
   renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.20;  // a touch brighter -> luminous warm jewel (not grey)
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;  // restrained exposure -> clear crystal, type reads through the glass (not blown white)
   sceneEl.appendChild(renderer.domElement);
 
   const scene=new THREE.Scene();
@@ -371,13 +371,13 @@
   // Mobile/LOW: lighter translucent reflective amber (NO transmission) -> env reflection + clearcoat carry the glass read.
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xfff4e2, metalness:0.0, roughness:0.028,        // clean, warm hand-cut crystal (slightly clearer)
-        transmission:0.985, ior:1.49, thickness:0.90,          // slight, premium refraction -> the headline behind warps elegantly and stays legible
-        attenuationColor:new THREE.Color(0xff8c46), attenuationDistance:5.0,  // brighter warm tint + longer distance = luminous, never grey
-        clearcoat:1.0, clearcoatRoughness:0.03,
-        iridescence:0.12, iridescenceIOR:1.28, iridescenceThicknessRange:[140,400], // restrained sparkle, warmed range (no cool/grey film)
+        color:0xfff7ec, metalness:0.0, roughness:0.018,        // near-optically-clear hand-cut crystal
+        transmission:1.0, ior:1.5, thickness:1.18,             // full transmission + thicker body -> the headline behind bends/lenses elegantly through the glass
+        attenuationColor:new THREE.Color(0xff9a55), attenuationDistance:6.5,  // warm tint, long distance = luminous & clear, never grey
+        clearcoat:1.0, clearcoatRoughness:0.025,
+        iridescence:0.05, iridescenceIOR:1.25, iridescenceThicknessRange:[160,420], // whisper of sparkle only (no milky film)
         specularIntensity:1.0, specularColor:new THREE.Color(0xfff3e0),
-        envMapIntensity:2.6, emissive:0x6e2e0c, emissiveIntensity:0.14 })  // brighter env reflection + warm internal lift = warm jewel glow
+        envMapIntensity:1.15, emissive:0x2a1206, emissiveIntensity:0.05 })  // restrained env reflection (no blown-out white haze) -> clear refractive crystal
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
         transmission:0.0, ior:1.46, transparent:true, opacity:0.58,   // lighter translucent amber glass for mobile
@@ -387,11 +387,11 @@
   // frosted / etched glass cornicione rim
   const cornMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xffe9cf, metalness:0.0, roughness:0.5,         // frosted, etched crystal edge
-        transmission:0.44, ior:1.45, thickness:0.55,
-        clearcoat:0.6, clearcoatRoughness:0.3,
-        iridescence:0.16, iridescenceIOR:1.3,
-        envMapIntensity:1.15, emissive:0x1a0d04, emissiveIntensity:0.05 })
+        color:0xffe7cb, metalness:0.0, roughness:0.34,        // lightly etched crystal edge (less frosted -> less white)
+        transmission:0.6, ior:1.46, thickness:0.55,
+        clearcoat:0.6, clearcoatRoughness:0.25,
+        iridescence:0.1, iridescenceIOR:1.3,
+        envMapIntensity:0.8, emissive:0x140a03, emissiveIntensity:0.03 })
     : new THREE.MeshPhysicalMaterial({
         color:0xffe9cf, metalness:0.0, roughness:0.46, transparent:true, opacity:0.8,
         clearcoat:0.6, clearcoatRoughness:0.3,
@@ -433,7 +433,7 @@
     const segs=Math.max(8,Math.round((a1-a0)/TAU*(LOW?40:72)));
     const Rc=RADIUS*0.985, topY=THICK*0.66, pathPts=[];
     for(let s=0;s<=segs;s++){const a=a0+(a1-a0)*s/segs;pathPts.push(new THREE.Vector3(Math.cos(a)*Rc,topY,-Math.sin(a)*Rc));}
-    const geo=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pathPts),segs,0.195,Q.tubeRad,false);
+    const geo=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pathPts),segs,0.155,Q.tubeRad,false);
     const pos=geo.attributes.position,nor=geo.attributes.normal;       // subtle frosted-glass irregularity
     for(let v=0;v<pos.count;v++){const x=pos.getX(v),y=pos.getY(v),z=pos.getZ(v);
       const bump=(Math.sin(x*5.5+z*4.7)*Math.cos(z*5.1-x*4.3))*0.03;
@@ -776,7 +776,7 @@
       fsScene=new THREE.Scene();fsCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
       quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),null);quad.frustumCulled=false;fsScene.add(quad);
       const vert='varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}';
-      brightMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},threshold:{value:0.78}},vertexShader:vert,
+      brightMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},threshold:{value:0.86}},vertexShader:vert,
         fragmentShader:'uniform sampler2D tDiffuse;uniform float threshold;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(0.299,0.587,0.114));float f=smoothstep(threshold,threshold+0.18,l);gl_FragColor=vec4(c.rgb*f,c.a*f);}'});
       blurMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},dir:{value:new THREE.Vector2()},res:{value:new THREE.Vector2(hw,hh)}},vertexShader:vert,
         fragmentShader:'uniform sampler2D tDiffuse;uniform vec2 dir;uniform vec2 res;varying vec2 vUv;void main(){vec2 px=dir/res;vec4 s=texture2D(tDiffuse,vUv)*0.227027;s+=texture2D(tDiffuse,vUv+px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv-px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv+px*3.2308)*0.070270;s+=texture2D(tDiffuse,vUv-px*3.2308)*0.070270;gl_FragColor=s;}'});
@@ -958,8 +958,8 @@
     if(partsPts.visible){ partsMat.uniforms.uTime.value=t; partsMat.uniforms.uDiss.value=scrollOpen; }
 
     // hover/scroll-driven glow: jewel bloom intensity + gold fresnel rim rise as the crystal opens (restrained on scroll so the cloud reads cleanly, not blown out)
-    if(compMat)compMat.uniforms.bloom.value=0.22+bloom*0.34+scrollOpen*0.10;
-    fresnelMat.uniforms.uIntensity.value=0.30+bloom*0.85+scrollOpen*0.30;
+    if(compMat)compMat.uniforms.bloom.value=0.12+bloom*0.30+scrollOpen*0.10;
+    fresnelMat.uniforms.uIntensity.value=0.14+bloom*0.78+scrollOpen*0.28;
 
     // skip the (now-invisible) canvas render once the hero has fully scrolled away -> keeps the
     // content sections perfectly smooth; resumes instantly when scrolling back up or on hover.
