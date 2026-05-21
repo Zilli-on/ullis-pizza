@@ -8,13 +8,13 @@
 <title>ULLIS PIZZA — Glass · Pizza Passion Precision</title>
 <!--
   GLASS BLOOM PROTOTYPE (glass.html) — KODE-IMMERSIVE-style restyle.
-  The 8 procedural wedges are a clean, abstract AMBER glass crystal (no toppings, no scene transmission
-  -> buttery on low-end GPUs) set in a vivid orange world with film grain. Hover (or touch-and-hold)
-  blooms the pizza apart; scrolling pixelates it into a KODE-style GRID of square orange tiles that drift
-  and fade. Copy decodes via a text-scramble effect.
-  The giant cropped Bodoni "PIZZA / PASSION / PRECISION" lives in the DOM (#hero), bleeding off the TOP
-  edge of the viewport — in front of the orange world, NOT behind the glass.
-  Type: Archivo body + giant Bodoni Moda Didone display; DM Mono bracket UI.
+  The 8 procedural wedges form a clear GLOSSY AMBER crystal pizza on an opaque warm-orange backdrop. The
+  giant cropped Bodoni "PIZZA / PASSION / PRECISION" lives IN THE 3D SCENE on a plane BEHIND the pizza, so
+  the crystal's transmission REFRACTS the type (you read it distorted through the glass). The pizza is
+  completely INDEPENDENT OF SCROLL: it slowly idles around its Y axis, and HOVER is the only interaction —
+  the seamless whole disc cuts apart into wedges on hover and reassembles on leave. Copy decodes via a
+  text-scramble effect; the headline plane re-rasters a scramble on reveal, then settles.
+  Type: Archivo body + giant Bodoni Moda Didone display; DM Mono bracket UI (cyan accent on orange).
   Asset credits (see assets/CREDITS.txt): environment lighting "brown_photostudio_02" Poly Haven, CC0.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,6 +30,7 @@
     --black:#0c0300;
     --cream:#fff3e6;           /* warm white -> display + glass glow accents */
     --gold:#ffd9a0;
+    --cyan:#2BD2FF;            /* crisp cyan accent -> nav + bracket UI on orange */
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   /* SCROLL FIX: a previous `html{scroll-behavior:smooth}` made programmatic scrolls (scrollTop / scrollTo
@@ -79,8 +80,8 @@
 
   header{position:fixed;top:0;left:0;width:100%;z-index:100;display:flex;justify-content:space-between;
     align-items:center;padding:22px 36px;font-size:11px;letter-spacing:2.5px;
-    font-weight:500;color:var(--ink);
-    border-bottom:1px solid rgba(24,6,0,.22);
+    font-weight:500;color:var(--cyan);
+    border-bottom:1px solid rgba(43,210,255,.28);
     background:linear-gradient(to bottom, rgba(255,90,31,.34) 0%, rgba(255,90,31,0) 100%);
     -webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px);}
   header .brand{font-weight:700;letter-spacing:2px;}
@@ -89,46 +90,26 @@
   header .mid span:hover,header .contact:hover{opacity:1;}
   @media(max-width:680px){header .mid{display:none;}header{padding:15px 18px;font-size:10px;letter-spacing:2px;}}
 
-  /* KODE hero: the giant cropped Bodoni headline (PIZZA / PASSION / PRECISION) lives in the DOM,
-     cropped + bleeding off the TOP edge of the viewport. Sits behind the crystal canvas (z 2 < scene 3),
-     in front of the orange world (z 1). The .hero section is the scroll spacer. */
+  /* The giant Didone headline (PIZZA / PASSION / PRECISION) NO LONGER lives in the DOM — it is now an
+     in-scene plane positioned BEHIND the crystal so the pizza's transmission REFRACTS it (you read the
+     text distorted through the glass). The .hero section remains only as the first-screen scroll spacer. */
   .hero{position:relative;width:100%;height:100svh;z-index:2;}
   .sc{opacity:0;}
 
-  #hero{position:fixed;top:0;left:0;width:100%;height:100svh;z-index:2;pointer-events:none;
-    overflow:hidden;will-change:transform,opacity;}
-  /* giant Didone words, cropped: the block is pulled UP so the first word bleeds off the top edge */
-  #hero .hwords{position:absolute;top:0;left:0;width:100%;padding:0 4.5vw;
-    transform:translateY(-22%);}                 /* crop the top of the headline off-screen (KODE) */
-  #hero .hl{display:block;font-family:"Bodoni Moda",serif;font-weight:900;
-    font-size:clamp(108px,26vw,440px);line-height:.74;letter-spacing:-0.045em;text-transform:uppercase;
-    color:var(--ink);white-space:nowrap;}
-  #hero .hl-in{font-style:italic;color:var(--red-deep);margin-left:0.18em;}  /* mid line shifted -> editorial asymmetry */
-  /* black uppercase grotesk body copy, RIGHT-ALIGNED block (KODE) */
-  #hero .hbody{position:absolute;right:5vw;bottom:14svh;max-width:340px;text-align:right;
-    font-family:"Archivo",sans-serif;text-transform:uppercase;font-weight:700;
-    font-size:clamp(11px,1.05vw,14px);letter-spacing:0.12em;line-height:1.7;color:var(--ink);}
-  #hero .hbody p{margin:0 0 8px;}
-  @media(max-width:680px){
-    #hero .hwords{transform:translateY(-14%);padding:0 5vw;}
-    #hero .hl{font-size:clamp(72px,23vw,160px);}
-    #hero .hbody{right:6vw;bottom:18svh;max-width:62vw;font-size:10px;letter-spacing:0.1em;}
-  }
-
   .heroix{position:fixed;bottom:26px;left:34px;z-index:40;font-size:10px;letter-spacing:2.5px;
-    color:var(--ink);opacity:.62;transition:opacity .4s;}
+    color:var(--cyan);opacity:.72;transition:opacity .4s;}
   .scroll-hint{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:40;font-family:"DM Mono",monospace;font-size:10px;
-    letter-spacing:3px;text-transform:uppercase;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:9px;opacity:.78;transition:opacity .4s;}
-  .scroll-hint .bar{width:1px;height:36px;background:linear-gradient(to bottom,var(--ink),rgba(24,6,0,0));animation:drop 1.9s infinite;}
+    letter-spacing:3px;text-transform:uppercase;color:var(--cyan);display:flex;flex-direction:column;align-items:center;gap:9px;opacity:.85;transition:opacity .4s;}
+  .scroll-hint .bar{width:1px;height:36px;background:linear-gradient(to bottom,var(--cyan),rgba(43,210,255,0));animation:drop 1.9s infinite;}
   @keyframes drop{0%{transform:scaleY(0);transform-origin:top;}45%{transform:scaleY(1);transform-origin:top;}55%{transform:scaleY(1);transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
-  .corner-ar{position:fixed;bottom:26px;right:32px;z-index:40;font-family:"DM Mono",monospace;font-size:10px;letter-spacing:2px;border:1px solid rgba(24,6,0,.45);
-    padding:5px 12px;border-radius:20px;color:var(--ink);transition:opacity .4s;}
-  .touch-hint{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:40;font-family:"DM Mono",monospace;font-size:10px;color:var(--ink);
+  .corner-ar{position:fixed;bottom:26px;right:32px;z-index:40;font-family:"DM Mono",monospace;font-size:10px;letter-spacing:2px;border:1px solid rgba(43,210,255,.5);
+    padding:5px 12px;border-radius:20px;color:var(--cyan);transition:opacity .4s;}
+  .touch-hint{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:40;font-family:"DM Mono",monospace;font-size:10px;color:var(--cyan);
     letter-spacing:2px;text-transform:uppercase;opacity:0;display:none;}
   @media(hover:none){.touch-hint{display:block;animation:fade 4.5s ease forwards;animation-delay:1.4s;}}
   @keyframes fade{0%{opacity:0;}16%{opacity:.9;}82%{opacity:.9;}100%{opacity:0;}}
 
-  .sect-ix{position:absolute;top:6.5vh;left:7vw;font-family:"DM Mono",monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--ink);opacity:.6;}
+  .sect-ix{position:absolute;top:6.5vh;left:7vw;font-family:"DM Mono",monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--cyan);opacity:.78;}
 
   .mastery{position:relative;min-height:104svh;width:100%;color:var(--ink);
     display:flex;flex-direction:column;justify-content:center;padding:15vh 7vw;z-index:10;overflow:hidden;
@@ -215,22 +196,10 @@
   <div class="contact mono">CONTACT</div>
 </header>
 
-<!-- The giant PIZZA / PASSION / PRECISION headline now lives in the DOM (#hero), cropped + bleeding off
-     the TOP edge of the viewport (KODE style). It sits BEHIND the canvas crystal but in FRONT of the
-     orange world; it is no longer rendered inside WebGL / behind the glass. -->
-<section class="hero">
-  <div id="hero">
-    <div class="hwords">
-      <span class="hl" data-text="PIZZA">PIZZA</span>
-      <span class="hl hl-in" data-text="PASSION">PASSION</span>
-      <span class="hl" data-text="PRECISION">PRECISION</span>
-    </div>
-    <div class="hbody">
-      <p class="sc" data-text="A pizza engineered like a cut jewel.">A pizza engineered like a cut jewel.</p>
-      <p class="sc" data-text="Slow-fermented dough, blistered edges, precision in every slice.">Slow-fermented dough, blistered edges, precision in every slice.</p>
-    </div>
-  </div>
-</section>
+<!-- The giant PIZZA / PASSION / PRECISION headline now lives IN THE 3D SCENE as a plane behind the crystal
+     (so the glass REFRACTS it). It is no longer DOM/HTML. This <section> remains only as the first-screen
+     scroll spacer so the page can still scroll down to the content sections below. -->
+<section class="hero"></section>
 
 <div class="heroix mono" id="heroix">[ 001 ] PIZZA / PASSION / PRECISION</div>
 <div class="scroll-hint" id="scrollhint"><span>Scroll for more</span><div class="bar"></div></div>
@@ -267,9 +236,9 @@
   <div class="footer mono"><span>ULLIS.PIZZA</span><span>© 2026 — Forno Italiano</span></div>
 </section>
 
-<!-- three.js 0.137 (UMD). The crystal is now a CHEAP amber MeshPhysicalMaterial (NO transmission) +
-     an InstancedMesh tile grid for the scroll dissolve — both run buttery on a low-end GPU.
-     jsDelivr primary; unpkg fallback in case of a CDN hiccup (same exact build/version). -->
+<!-- three.js 0.137 (UMD). Desktop crystal = MeshPhysicalMaterial with real transmission/refraction (one
+     transmissive object only -> cheap). It refracts an in-scene type plane behind it. Mobile = translucent
+     amber (transmission off). jsDelivr primary; unpkg fallback in case of a CDN hiccup (same build/version). -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"></script>
 <script>window.THREE||document.write('<script src="https://unpkg.com/three@0.137.0/build/three.min.js"><\/script>');</script>
 <script>
@@ -300,10 +269,11 @@
   const renderer=new THREE.WebGLRenderer({antialias:!LOW,alpha:true,premultipliedAlpha:false,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(1.5,devicePixelRatio,Q.dpr));   // hard 1.5 cap -> fill-rate friendly on this 8GB PC
   renderer.setSize(W,H);
-  // TRANSPARENT clear (alpha 0): transmission is gone, so the canvas no longer needs to BE the backdrop.
-  // The orange world is the CSS #stage behind the canvas, and the giant Didone headline lives in the DOM
-  // (cropped, bleeding off the top) — NOT behind the glass anymore.
-  renderer.setClearColor(new THREE.Color(0xf5430b),0);
+  // OPAQUE warm-orange clear (alpha 1): transmission is BACK, so the canvas must be a clean refraction
+  // backdrop. The giant Didone headline now lives IN-SCENE on a plane BEHIND the crystal, textured with
+  // this same orange + the black words, so the glass refracts the type. (CSS #stage still sits behind as
+  // a fallback while WebGL warms up.)
+  renderer.setClearColor(new THREE.Color(0xf5430b),1);
   renderer.shadowMap.enabled=false;                 // glass is ethereal; grounding handled by a soft contact-shadow sprite
   renderer.outputEncoding=THREE.sRGBEncoding;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;  // restrained exposure -> clear crystal, type reads through the glass (not blown white)
@@ -398,21 +368,25 @@
     return crown+lump - dip*dip*0.10;}
 
   // ---- GLASS materials ----
-  // Desktop: CHEAP warm-amber translucent crystal (NO transmission -> no per-frame scene re-render). Clearcoat
-  // + HDRI env reflection carry the glassy sheen; alpha + emissive make it a luminous amber jewel.
-  // Mobile/LOW: lighter translucent reflective amber (also NO transmission).
+  // Desktop: GLOSSY CLEAR AMBER CRYSTAL with real scene transmission -> the in-scene type plane behind the
+  // pizza REFRACTS through it (you read the distorted black Didone words through the glass). Sharp/glossy
+  // (low roughness + clearcoat), NOT frosted/milky; warm amber attenuation tints it; env kept low so it
+  // stays see-through, not a white sheet.
+  // Mobile/LOW: a lighter translucent amber (transmission OFF for fill-rate) — the text plane still shows
+  // through via the low opacity.
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        // CHEAP warm-amber translucent crystal — NO scene transmission (that re-rendered the whole scene
-        // to a target every frame and froze scrolling). Reads as a luminous amber jewel against the orange world.
-        color:0xff8a3d, metalness:0.0, roughness:0.12,
-        transmission:0.0, transparent:true, opacity:0.82,      // simple alpha translucency, not a window to the scene
-        clearcoat:1.0, clearcoatRoughness:0.06,                // glassy lacquer sheen
-        envMapIntensity:1.25,                                  // HDRI reflections carry the "glass" read
-        emissive:0x331405, emissiveIntensity:0.12 })           // subtle warm inner glow -> never pale/white
+        color:0xffffff, metalness:0.0, roughness:0.04,
+        transmission:1.0, ior:1.5, thickness:0.9,                    // clear glass that refracts the scene behind it
+        transparent:true,
+        clearcoat:1.0, clearcoatRoughness:0.04,                      // glossy lacquer sheen (sharp, not frosted)
+        attenuationColor:new THREE.Color(0xffa860), attenuationDistance:6.0,  // warm amber tint through the body
+        specularIntensity:0.6,
+        envMapIntensity:0.7,                                         // glossy reflections, low enough to stay see-through
+        emissive:0x1a0b04, emissiveIntensity:0.03 })                // faint warm core -> never goes pale
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
-        transmission:0.0, ior:1.46, transparent:true, opacity:0.58,   // lighter translucent amber glass for mobile
+        transmission:0.0, ior:1.46, transparent:true, opacity:0.6,   // lighter translucent amber glass for mobile
         clearcoat:1.0, clearcoatRoughness:0.08, reflectivity:0.62,
         envMapIntensity:2.1, emissive:0x4a200c, emissiveIntensity:0.14 });
 
@@ -531,67 +505,92 @@
     pizza.add(wholeDisc);
   })();
 
-  pizza.rotation.x=0.44;pizza.position.y=0.14;          // gentler tilt -> reads as a round pizza, not a flat bowl
+  pizza.rotation.x=0.46;pizza.position.y=0.14;          // oblique tilt -> reads as a round pizza tilted toward the viewer
 
-  // ===== DOM HERO HEADLINE — the giant cropped Bodoni words now live in the DOM (#hero), bleeding off
-  // the TOP edge of the viewport (KODE style). The type is NO LONGER behind the glass — the canvas is
-  // transparent and the crystal sits in front of the orange world. The scramble-decode runs on the DOM
-  // spans via the existing scramble() machinery; here we just expose a startHeroDecode() hook + a
-  // per-frame scroll parallax that lifts the headline up & off as you scroll, matching the old feel.
-  const heroEl=document.getElementById('hero');
-  const heroLineEls=heroEl?Array.from(heroEl.querySelectorAll('.hl')):[];
-  function startHeroDecode(){
-    if(!heroEl) return;
-    heroEl.style.opacity='1';
-    if(LOW||SHOT){ heroLineEls.forEach(el=>{el.textContent=el.dataset.text; el.dataset.done='1';}); return; }
-    heroLineEls.forEach(el=>scramble(el));   // KODE scramble/decode on the DOM headline
+  // ===== IN-SCENE TYPE PLANE (the headline lives BEHIND the glass so the crystal REFRACTS it) ==========
+  // A large unlit (MeshBasicMaterial) plane sits at z=-5, behind the pizza. It is textured with a canvas
+  // that paints the same warm orange background + the giant black Didone (Bodoni Moda) words "PIZZA" /
+  // "PASSION" / "PRECISION" stacked, very large, the top word cropped/bleeding off the top edge. High
+  // contrast black-on-orange so the refraction reads beautifully through the transmissive glass.
+  let typePlane=null, typeTex=null, typeCanvas=null, typeCtx=null;
+  const HEAD_WORDS=['PIZZA','PASSION','PRECISION'];
+  const HEAD_BG='#f5430b';                                // matches the renderer clearColor
+  // The plane is sized to comfortably cover the camera's view at z=-5 in any aspect (recomputed on resize).
+  const TYPE_Z=-5;
+  let typeW=16, typeH=10;
+  function buildTypeCanvas(){
+    if(!typeCanvas){ typeCanvas=document.createElement('canvas'); typeCtx=typeCanvas.getContext('2d'); }
+    // canvas resolution: keep the aspect close to the plane so the type isn't stretched
+    const CW=2048, CH=Math.round(2048*(typeH/typeW));
+    if(typeCanvas.width!==CW||typeCanvas.height!==CH){ typeCanvas.width=CW; typeCanvas.height=CH; }
+    return {CW,CH};
   }
-  function fitHeroPlane(){/* no-op kept for resize hook compatibility (DOM hero is CSS-sized) */}
-
-  // ---- SCROLL DISSOLVE: KODE-style square-tile voxel grid (replaces the old particle cloud) ----
-  // The hero pizza pixelates into a grid of camera-facing square tiles in slightly-varying shades of
-  // orange (tone-on-tone, semi-transparent). As scrollOpen rises the solid pizza fades/shrinks out and
-  // the grid fades IN, each tile getting a small staggered drift + per-tile opacity ramp -> a gentle
-  // pixelated cascade, NOT an explosion. 81 instances -> updated on the CPU each frame (cheap).
-  const GRID_COLS=9, GRID_ROWS=9, GRID_N=GRID_COLS*GRID_ROWS;
-  const GRID_SPAN=RADIUS*2.05;                 // world footprint the grid covers (~the pizza disc)
-  const TILE=(GRID_SPAN/GRID_COLS)*0.92;       // small gutter between tiles -> visible grid
-  let voxMesh=null;
-  const voxData=[];                            // per-tile static params (base local x/y, drift dir, stagger, jitter)
-  (function buildVoxelGrid(){
-    const geo=new THREE.PlaneGeometry(TILE,TILE);
-    const mat=new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,depthTest:true,
-      blending:THREE.NormalBlending,opacity:0});       // global opacity ramps with scroll
-    voxMesh=new THREE.InstancedMesh(geo,mat,GRID_N);
-    voxMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    voxMesh.frustumCulled=false; voxMesh.renderOrder=2;
-    // per-instance color: slightly varying shades of orange around #ff5a1e (tone-on-tone)
-    const lo=new THREE.Color(0xe8480f), hi=new THREE.Color(0xff7a3a), c=new THREE.Color();
-    for(let r=0;r<GRID_ROWS;r++){
-      for(let col=0;col<GRID_COLS;col++){
-        const idx=r*GRID_COLS+col;
-        const lx=(col-(GRID_COLS-1)/2)*(GRID_SPAN/GRID_COLS);   // centred local grid position
-        const ly=((GRID_ROWS-1)/2-r)*(GRID_SPAN/GRID_ROWS);
-        const dist=Math.hypot(lx,ly)/(GRID_SPAN*0.7);           // centre tiles cascade in first
-        c.copy(lo).lerp(hi, Math.random());                     // random tone-on-tone shade
-        voxMesh.setColorAt(idx, c);
-        voxData.push({
-          lx, ly,
-          dr: Math.atan2(ly,lx)+(Math.random()-0.5)*0.6,        // outward-ish drift direction
-          stg: Math.min(0.9, dist*0.55 + Math.random()*0.35),   // per-tile staggered start (0..~0.9)
-          jx: (Math.random()-0.5),                              // small per-tile lateral jitter seed
-          jy: (Math.random()-0.5),
-          ph: Math.random()*TAU,
-          op: 0.5+Math.random()*0.42                            // per-tile peak opacity (semi-transparent)
-        });
+  // decode-on-load scramble for the in-scene type (re-rasters the canvas a handful of frames, then settles)
+  const TYPE_GLY='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+*/<>[]#=';
+  let typeDecode=0;                 // 0..1 decode progress (1 = settled, stop re-rastering)
+  let typeDecodeActive=false;
+  function rasterType(decode){
+    const {CW,CH}=buildTypeCanvas();
+    const x=typeCtx;
+    x.fillStyle=HEAD_BG; x.fillRect(0,0,CW,CH);
+    x.fillStyle='#0c0300';                                // giant black Didone words
+    x.textAlign='center'; x.textBaseline='alphabetic';
+    const fontSize=Math.round(CW*0.26);                  // very large -> words bleed off the sides + top/bottom
+    x.font='900 '+fontSize+'px "Bodoni Moda", serif';
+    const lh=fontSize*0.82;                              // tight leading
+    // pull the block UP so the first word ("PIZZA") is cropped/bleeding off the top edge (KODE crop);
+    // the three stacked words are centred so PIZZA bleeds off the top and PRECISION nears the bottom.
+    const block=lh*(HEAD_WORDS.length-1);
+    const startY=CH*0.50 - block*0.5 + fontSize*0.34;    // first baseline (cap of word 0 crops off the top)
+    for(let i=0;i<HEAD_WORDS.length;i++){
+      let word=HEAD_WORDS[i];
+      if(decode<1){                                      // scramble each glyph until its per-word window passes
+        const settle=(decode*HEAD_WORDS.length)-i;       // word i resolves as decode crosses i/N
+        if(settle<1){
+          let out='';
+          for(let k=0;k<word.length;k++){
+            out += (Math.random()<Math.max(0,settle)) ? word[k] : TYPE_GLY[(Math.random()*TYPE_GLY.length)|0];
+          }
+          word=out;
+        }
       }
+      const y=startY+i*lh;
+      x.fillText(word, CW*0.5, y);
     }
-    if(voxMesh.instanceColor) voxMesh.instanceColor.needsUpdate=true;
-    voxMesh.visible=false;
-    scene.add(voxMesh);     // world-space: billboarded + positioned each frame to track the pizza
-  })();
-  const _vQ=new THREE.Quaternion(), _vP=new THREE.Vector3(), _vS=new THREE.Vector3(),
-        _vM=new THREE.Matrix4(), _vScl=new THREE.Vector3();
+    if(typeTex) typeTex.needsUpdate=true;
+  }
+  function buildTypePlane(){
+    rasterType(1);                                       // start settled; decode runs on reveal
+    typeTex=new THREE.CanvasTexture(typeCanvas);
+    typeTex.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy?renderer.capabilities.getMaxAnisotropy():1);
+    typeTex.encoding=THREE.sRGBEncoding;
+    const mat=new THREE.MeshBasicMaterial({map:typeTex, toneMapped:false, depthWrite:true});
+    typePlane=new THREE.Mesh(new THREE.PlaneGeometry(1,1), mat);
+    typePlane.position.set(0,0,TYPE_Z);
+    typePlane.renderOrder=-1;                            // always drawn first as the refraction backdrop
+    scene.add(typePlane);
+    fitTypePlane();
+  }
+  // size the plane so it always fills the camera frustum at z=TYPE_Z (plus margin so the type bleeds off-frame)
+  function fitTypePlane(){
+    if(!typePlane) return;
+    const dist=Math.abs(camBase.z - TYPE_Z);
+    const vH=2*Math.tan((34*Math.PI/180)/2)*dist;       // visible height of the frustum at the plane depth
+    const vW=vH*(W/H);
+    typeH=vH*1.18; typeW=vW*1.18;                        // 18% margin so words crop off-edge
+    typePlane.scale.set(typeW, typeH, 1);
+    buildTypeCanvas();                                   // keep canvas aspect in sync
+    rasterType(typeDecodeActive?typeDecode:1);
+  }
+  buildTypePlane();
+  // ensure the giant words raster in real Bodoni Moda (not the serif fallback) once the webfont loads
+  if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(()=>{ if(!typeDecodeActive) rasterType(typeDecode>=1?1:typeDecode); }); }
+  // hook used by the loader: kick off the in-scene decode (re-rasters until settled). Static if LOW/SHOT.
+  function startHeroDecode(){
+    if(LOW||SHOT){ typeDecode=1; typeDecodeActive=false; rasterType(1); return; }
+    typeDecode=0; typeDecodeActive=true;
+  }
+  function fitHeroPlane(){ fitTypePlane(); }             // resize hook -> keep the type plane fitted
 
   // ---- interaction: hover (desktop) / touch-and-hold (mobile) -> full-pizza bloom; release -> reassemble ----
   const ray=new THREE.Raycaster();
@@ -626,8 +625,7 @@
   addEventListener('resize',onResize);
   addEventListener('orientationchange',()=>setTimeout(onResize,250));
   const progEl=document.getElementById('prog');
-  let scrollP=0;addEventListener('scroll',()=>{
-    scrollP=Math.min(1,scrollY/innerHeight);
+  addEventListener('scroll',()=>{
     const max=Math.max(1,document.documentElement.scrollHeight-innerHeight);
     progEl.style.width=(Math.min(1,scrollY/max)*100).toFixed(2)+'%';
   },{passive:true});
@@ -801,8 +799,7 @@
   // adaptive FPS guard: after warm-up, if the device struggles shed cost once (lower DPR, drop DOF/CA, fewer blur passes)
   let fpsWarm=0,fpsAccum=0,fpsFrames=0,fpsDone=false;
   let prevBloomActive=false;
-  let scrollWhooshArmed=true, audioFrame=0;             // dissolve-whoosh re-arm + throttle for per-frame audio modulation
-  let scrollPS=0;                                       // smoothed scroll progress -> buttery scroll-driven dissolve
+  let audioFrame=0;                                     // throttle for per-frame audio modulation + type re-raster
   function animate(){
     requestAnimationFrame(animate);
     const dt=Math.min(clock.getDelta(),0.045),t=clock.getElapsedTime();
@@ -825,32 +822,25 @@
     camera.position.z=lerp(camera.position.z, camBase.z+Math.cos(t*0.10)*0.42, 0.06);
     camera.lookAt(camLook);
 
-    pizza.rotation.y+=dt*0.055*(bloom>0.15?0.25:1);     // slow, premium idle turntable
+    // SLOW IDLE ROTATION — always on, continuous, NOT gated behind hover/scroll. The crystal slowly
+    // turns around its vertical axis so the refracted text shifts as it spins.
+    pizza.rotation.y+=dt*0.12;                            // constant premium turntable
     pizzaWrap.rotation.y=lerp(pizzaWrap.rotation.y, pYaw+Math.sin(t*0.13)*0.035, 0.05);  // alive-at-rest parallax drift
     pizzaWrap.rotation.x=lerp(pizzaWrap.rotation.x, pPit+Math.sin(t*0.10)*0.018, 0.05);
     const bob=Math.sin(t*0.6)*0.07;pizza.position.y=0.14+bob;   // gentle breathing float
 
-    // smooth the scroll progress for a buttery scroll-driven dissolve;
-    // gentler easing on the way back up -> the crystal reforms slowly and gracefully
-    { const k=(scrollP<scrollPS)?0.075:0.11; scrollPS=lerp(scrollPS,scrollP,k); }
-    const s=scrollPS;
-    shadow.material.opacity=Math.max(0.0,0.5-bob*0.3-bloom*0.15-s*0.7);shadow.scale.setScalar(1.0+bob*0.14+bloom*0.10);
-    // canvas holds opacity while the particle cloud lives, then fades late as section 2 scrolls over it
+    // The pizza is COMPLETELY INDEPENDENT OF SCROLL now. We only read scroll for DOM UI fades (scroll hint,
+    // hero index) and the canvas fade-out as the content sections scroll up over the fixed crystal.
+    const s=Math.min(1,scrollY/innerHeight);
+    shadow.material.opacity=Math.max(0.0,0.5-bob*0.3-bloom*0.15);shadow.scale.setScalar(1.0+bob*0.14+bloom*0.10);
+    // canvas (and its orange backdrop) fades late as section 2 scrolls over it
     sceneEl.style.opacity=(1-Math.min(1,Math.max(0,(s-0.58)/0.42))).toFixed(3);
-    pizzaWrap.position.x=OFFX;boardWrap.position.x=OFFX;          // editorial right offset
-    pizzaWrap.position.y=lerp(0,1.35,s);boardWrap.position.y=lerp(0,1.35,s);
-    const sc=lerp(1,0.80,s)*BASE_SCALE;pizzaWrap.scale.setScalar(sc);boardWrap.scale.setScalar(sc);
+    pizzaWrap.position.x=OFFX;boardWrap.position.x=OFFX;          // editorial right offset (no scroll lift)
+    pizzaWrap.scale.setScalar(BASE_SCALE);boardWrap.scale.setScalar(BASE_SCALE);
     document.getElementById('scrollhint').style.opacity=(1-s*2.2).toFixed(2);
-    heroix.style.opacity=(0.62-s*1.4).toFixed(2);
+    heroix.style.opacity=(0.72-s*1.4).toFixed(2);
 
-    // DOM hero headline: scroll the giant cropped type UP & off, fading as section 2 rises (KODE feel)
-    if(heroEl){
-      const hp=Math.min(1, s/0.72);
-      heroEl.style.transform='translateY('+(-hp*42).toFixed(1)+'svh)';
-      heroEl.style.opacity=(1-Math.min(1,Math.max(0,(s-0.30)/0.42))).toFixed(3);
-    }
-
-    // hover detection
+    // hover detection (only while the crystal is still on-screen)
     if(s<0.85){ray.setFromCamera(mouse,camera);
       const ms=[];slices.forEach(g=>g.children.forEach(c=>{if(c.userData&&c.userData.si!==undefined)ms.push(c);}));
       const hit=ray.intersectObjects(ms,false);hovered=hit.length?hit[0].object.userData.si:-1;
@@ -872,21 +862,24 @@
     if(bloomActive&&!prevBloomActive)playWhoosh(Math.max(0.35,bloomVel));  // airy shimmer on bloom onset, scaled by bloom velocity
     prevBloomActive=bloomActive;
 
-    // SCROLL-DRIVEN DISSOLVE: scroll progressively blooms the pizza apart (combines with hover/hold)
-    const scrollOpen=Math.min(1,s/0.9);
-    const opn=Math.min(1.18, bloom + scrollOpen*0.95);
-    // soft dissolve whoosh when scrolling down past the "falling apart" threshold (re-arms near the top)
-    if(scrollOpen>0.34 && scrollWhooshArmed){ scrollWhooshArmed=false; playWhoosh(0.55); }
-    if(scrollOpen<0.16){ scrollWhooshArmed=true; }
-    // cohesion: gentle exposure lift + brighter ambient pad as the crystal opens (motion <-> light <-> sound)
-    renderer.toneMappingExposure=1.08+bloom*0.08+scrollOpen*0.04;
+    // bloom open amount = HOVER ONLY (no scroll term). At rest opn=0 -> seamless whole disc.
+    const opn=Math.min(1.18, bloom);
+    // cohesion: gentle exposure lift + brighter ambient pad as the crystal blooms (motion <-> light <-> sound)
+    renderer.toneMappingExposure=1.08+bloom*0.08;
     if(soundOn&&audioBuilt&&padLP&&(++audioFrame%8===0)){
-      padLP.frequency.setTargetAtTime(440+bloom*820+scrollOpen*420, actx.currentTime, 0.25);
+      padLP.frequency.setTargetAtTime(440+bloom*820, actx.currentTime, 0.25);
     }
 
-    // KODE-style swap: show the SEAMLESS whole disc at rest; the instant you interact (hover bloom or any
-    // scroll) it switches to the wedges, which then cut apart + scatter. Reassembles -> swaps back to whole.
-    const interacting = bloom>0.012 || scrollOpen>0.004;
+    // type-plane decode: re-raster a few frames while decoding, then settle and stop (perf).
+    if(typeDecodeActive){
+      typeDecode=Math.min(1, typeDecode + dt*0.85);
+      if((audioFrame%2===0) || typeDecode>=1){ rasterType(typeDecode); }   // ~30fps re-raster while decoding
+      if(typeDecode>=1){ typeDecodeActive=false; rasterType(1); }
+    }
+
+    // KODE-style swap: show the SEAMLESS whole disc at rest; the instant you HOVER it switches to the
+    // wedges, which cut apart + scatter. On leave it reassembles -> swaps back to the clean whole disc.
+    const interacting = bloom>0.012;
     if(wholeDisc) wholeDisc.visible = !interacting;
     for(let si=0; si<slices.length; si++) slices[si].visible = interacting;
 
@@ -896,69 +889,23 @@
       let v=opn*(1+bp.stagger)-bp.stagger; v=v<0?0:(v>1?1:v);
       v=v*v*v*(v*(v*6.0-15.0)+10.0);                 // smootherstep -> graceful, no jerk
       g.userData.lift=v;
-      const drift=scrollOpen*scrollOpen*1.05;         // bolder outward drift while scrolling -> wedges fly far before dissolving into the orange
       const wob=Math.sin(t*bp.ws+bp.ph)*bp.wob*v;
-      const ang=v*bp.tilt+wob + scrollOpen*scrollOpen*bp.tilt*0.6;   // open + extra tumble about the radial axis as it dissolves
-      const spinAng=bp.spin*v+Math.sin(t*0.16+bp.ph)*0.10*v + scrollOpen*bp.spin*2.2;  // accelerate the turn more as it dissolves
+      const ang=v*bp.tilt+wob;                        // open + tumble about the radial axis (hover only)
+      const spinAng=bp.spin*v+Math.sin(t*0.16+bp.ph)*0.10*v;
       _qTilt.setFromAxisAngle(bp.axis,ang);
       _qSpin.setFromAxisAngle(YAXIS,spinAng);
       g.quaternion.copy(_qSpin).multiply(_qTilt);
-      const ox=g.userData.dir.x*(v*bp.outV+drift);
-      const oz=g.userData.dir.z*(v*bp.outV+drift);
-      const oy=v*bp.upV+Math.sin(t*0.7+bp.ph)*0.03*v + scrollOpen*bp.upV*0.5;
+      const ox=g.userData.dir.x*(v*bp.outV);
+      const oz=g.userData.dir.z*(v*bp.outV);
+      const oy=v*bp.upV+Math.sin(t*0.7+bp.ph)*0.03*v;
       const C=g.userData.cen, Cr=C.clone().applyQuaternion(g.quaternion);
       g.position.set(ox+C.x-Cr.x, oy+C.y-Cr.y, oz+C.z-Cr.z);   // pivot the roll about the wedge centroid, then travel
-      // dissolve: scroll shrinks each wedge away into the cloud, staggered for a cascade (hover bloom keeps full size)
-      let dl=(scrollOpen-0.16-bp.stagger*0.5)/0.46; dl=dl<0?0:(dl>1?1:dl);
-      dl=dl*dl*dl*(dl*(dl*6.0-15.0)+10.0);
-      g.scale.setScalar(Math.max(0.0008, 1.0-dl));
+      g.scale.setScalar(1.0);                         // wedges always full size (no scroll dissolve)
     });
 
-    // drive the KODE square-tile voxel grid (scroll-linked dissolve); hidden entirely at rest.
-    // The grid lives in world space: each frame we position it at the pizza's on-screen footprint,
-    // billboard it to face the camera, and update the 81 instance matrices + a per-tile staggered
-    // opacity that pixelates the pizza into a loose drifting grid as scrollOpen climbs.
-    if(voxMesh){
-      voxMesh.visible = scrollOpen>0.002;
-      if(voxMesh.visible){
-        // grid centre = pizza-group origin in world space (follows OFFX, scroll-lift, scale via pizzaWrap)
-        pizza.updateWorldMatrix(true,false);
-        const me=pizza.matrixWorld.elements;
-        const cx=me[12], cy=me[13], cz=me[14];             // pizza origin in world space
-        _vScl.setFromMatrixScale(pizza.matrixWorld);
-        const gscale=_vScl.x;                              // uniform scale from pizzaWrap
-        _vQ.copy(camera.quaternion);                       // billboard: every tile faces the camera
-        // global grid opacity: invisible at rest, fades in early, fades to near-gone by scrollOpen~1
-        const fadeIn=Math.min(1, scrollOpen/0.32);
-        const fadeOut=1.0-Math.min(1, Math.max(0,(scrollOpen-0.55)/0.45));
-        voxMesh.material.opacity=0.92*fadeIn*fadeOut;
-        for(let k=0;k<GRID_N;k++){
-          const d=voxData[k];
-          // per-tile progress: staggered so tiles pixelate IN as a centre-out cascade
-          let tp=(scrollOpen-d.stg*0.5)/0.6; tp=tp<0?0:(tp>1?1:tp);
-          tp=tp*tp*(3.0-2.0*tp);                            // smoothstep
-          // gentle drift apart (loose grid, NOT an explosion) + soft idle breathing
-          const drift=tp*GRID_SPAN*0.18;
-          const px=d.lx + Math.cos(d.dr)*drift + Math.sin(t*0.6+d.ph)*0.04*tp + d.jx*tp*0.10;
-          const py=d.ly + Math.sin(d.dr)*drift + Math.cos(t*0.5+d.ph)*0.04*tp + d.jy*tp*0.10;
-          // local (billboard-plane) offset rotated to camera orientation, scaled with the pizza
-          _vP.set(px*gscale, py*gscale, 0).applyQuaternion(_vQ);
-          _vP.x+=cx; _vP.y+=cy; _vP.z+=cz;
-          // per-tile fade: appears with its own stagger (tp), then drifts/fades out late in the scroll.
-          // (MeshBasicMaterial instanceColor has no per-instance alpha, so the staggered cascade is
-          //  carried by collapsing each tile's SCALE to ~0 until/after its window — global opacity sets tone.)
-          const tileA=tp*(1.0-Math.min(1,Math.max(0,(scrollOpen-0.6-d.stg*0.25)/0.4)));
-          _vS.setScalar( tileA<0.04 ? 0.0001 : gscale*(0.96+tp*0.06) );
-          _vM.compose(_vP,_vQ,_vS);
-          voxMesh.setMatrixAt(k,_vM);
-        }
-        voxMesh.instanceMatrix.needsUpdate=true;
-      }
-    }
-
-    // hover/scroll-driven glow: jewel bloom intensity + gold fresnel rim rise as the crystal opens (restrained on scroll so the cloud reads cleanly, not blown out)
-    if(compMat)compMat.uniforms.bloom.value=0.12+bloom*0.30+scrollOpen*0.10;
-    fresnelMat.uniforms.uIntensity.value=0.14+bloom*0.78+scrollOpen*0.28;
+    // hover-driven glow: jewel bloom intensity + gold fresnel rim rise as the crystal opens
+    if(compMat)compMat.uniforms.bloom.value=0.12+bloom*0.30;
+    fresnelMat.uniforms.uIntensity.value=0.14+bloom*0.78;
 
     // skip the (now-invisible) canvas render once the hero has fully scrolled away -> keeps the
     // content sections perfectly smooth; resumes instantly when scrolling back up or on hover.
@@ -1016,7 +963,7 @@
       document.querySelectorAll('.sc').forEach(el=>{el.style.opacity='1';el.textContent=el.dataset.text;el.dataset.done='1';});
       startHeroDecode(); return;
     }
-    // the hero headline now lives in the DOM (#hero); it scramble-decodes the giant cropped Bodoni words
+    // the hero headline now lives IN-SCENE behind the glass; startHeroDecode() kicks its scramble re-raster
     startHeroDecode();
   }
   if(DEMO||SHOT){revealType();}
