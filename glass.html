@@ -8,14 +8,13 @@
 <title>ULLIS PIZZA — Glass · Pizza Passion Precision</title>
 <!--
   GLASS BLOOM PROTOTYPE (glass.html) — KODE-IMMERSIVE-style restyle.
-  The 8 procedural wedges are a clean, abstract refractive glass crystal (no toppings) set in a
-  vivid orange world with film grain. Hover (or touch-and-hold) blooms the pizza apart;
-  scrolling progressively dissolves it. Copy decodes via a text-scramble effect.
-  THE headline feature: the giant cropped Bodoni "PIZZA / PASSION / PRECISION" is rendered INSIDE
-  the WebGL scene on an opaque plane behind the crystal, with an opaque warm clearColor — so the
-  crystal's MeshPhysicalMaterial.transmission REFRACTS the type (real through-glass distortion).
-  (This needs three.js >= r129's scene-behind transmission pass; we load three 0.137.)
-  Type: clean Archivo editorial body + giant Bodoni Moda Didone display; DM Mono bracket UI.
+  The 8 procedural wedges are a clean, abstract AMBER glass crystal (no toppings, no scene transmission
+  -> buttery on low-end GPUs) set in a vivid orange world with film grain. Hover (or touch-and-hold)
+  blooms the pizza apart; scrolling pixelates it into a KODE-style GRID of square orange tiles that drift
+  and fade. Copy decodes via a text-scramble effect.
+  The giant cropped Bodoni "PIZZA / PASSION / PRECISION" lives in the DOM (#hero), bleeding off the TOP
+  edge of the viewport — in front of the orange world, NOT behind the glass.
+  Type: Archivo body + giant Bodoni Moda Didone display; DM Mono bracket UI.
   Asset credits (see assets/CREDITS.txt): environment lighting "brown_photostudio_02" Poly Haven, CC0.
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,11 +53,11 @@
   #scene{position:fixed;inset:0;z-index:3;touch-action:pan-y;will-change:transform,opacity;}
 
   /* tasteful film grain over the whole orange world (KODE hallmark) */
-  #grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.072;mix-blend-mode:soft-light;
+  #grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.105;mix-blend-mode:soft-light;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     animation:grainmove 1.3s steps(3) infinite;}
   @keyframes grainmove{0%{transform:translate(0,0);}33%{transform:translate(-4%,2%);}66%{transform:translate(3%,-3%);}100%{transform:translate(0,0);}}
-  .low #grain{opacity:.052;animation-duration:2.4s;}
+  .low #grain{opacity:.075;animation-duration:2.4s;}
   #vignette{position:fixed;inset:0;z-index:59;pointer-events:none;
     background:radial-gradient(125% 108% at 50% 40%,transparent 56%,rgba(80,12,0,.40) 100%);}
   /* slim scroll-progress chrome */
@@ -90,10 +89,31 @@
   header .mid span:hover,header .contact:hover{opacity:1;}
   @media(max-width:680px){header .mid{display:none;}header{padding:15px 18px;font-size:10px;letter-spacing:2px;}}
 
-  /* KODE hero: the giant cropped Bodoni headline (PIZZA / PASSION / PRECISION) is rendered inside the
-     WebGL scene so the crystal refracts it — the .hero section is just the scroll spacer for it. */
+  /* KODE hero: the giant cropped Bodoni headline (PIZZA / PASSION / PRECISION) lives in the DOM,
+     cropped + bleeding off the TOP edge of the viewport. Sits behind the crystal canvas (z 2 < scene 3),
+     in front of the orange world (z 1). The .hero section is the scroll spacer. */
   .hero{position:relative;width:100%;height:100svh;z-index:2;}
   .sc{opacity:0;}
+
+  #hero{position:fixed;top:0;left:0;width:100%;height:100svh;z-index:2;pointer-events:none;
+    overflow:hidden;will-change:transform,opacity;}
+  /* giant Didone words, cropped: the block is pulled UP so the first word bleeds off the top edge */
+  #hero .hwords{position:absolute;top:0;left:0;width:100%;padding:0 4.5vw;
+    transform:translateY(-22%);}                 /* crop the top of the headline off-screen (KODE) */
+  #hero .hl{display:block;font-family:"Bodoni Moda",serif;font-weight:900;
+    font-size:clamp(108px,26vw,440px);line-height:.74;letter-spacing:-0.045em;text-transform:uppercase;
+    color:var(--ink);white-space:nowrap;}
+  #hero .hl-in{font-style:italic;color:var(--red-deep);margin-left:0.18em;}  /* mid line shifted -> editorial asymmetry */
+  /* black uppercase grotesk body copy, RIGHT-ALIGNED block (KODE) */
+  #hero .hbody{position:absolute;right:5vw;bottom:14svh;max-width:340px;text-align:right;
+    font-family:"Archivo",sans-serif;text-transform:uppercase;font-weight:700;
+    font-size:clamp(11px,1.05vw,14px);letter-spacing:0.12em;line-height:1.7;color:var(--ink);}
+  #hero .hbody p{margin:0 0 8px;}
+  @media(max-width:680px){
+    #hero .hwords{transform:translateY(-14%);padding:0 5vw;}
+    #hero .hl{font-size:clamp(72px,23vw,160px);}
+    #hero .hbody{right:6vw;bottom:18svh;max-width:62vw;font-size:10px;letter-spacing:0.1em;}
+  }
 
   .heroix{position:fixed;bottom:26px;left:34px;z-index:40;font-size:10px;letter-spacing:2.5px;
     color:var(--ink);opacity:.62;transition:opacity .4s;}
@@ -195,9 +215,22 @@
   <div class="contact mono">CONTACT</div>
 </header>
 
-<!-- The giant PIZZA / PASSION / PRECISION headline is rendered INSIDE the WebGL scene (see "3D HERO
-     HEADLINE") so the glass crystal refracts it. This section is just the hero's scroll spacer. -->
-<section class="hero"></section>
+<!-- The giant PIZZA / PASSION / PRECISION headline now lives in the DOM (#hero), cropped + bleeding off
+     the TOP edge of the viewport (KODE style). It sits BEHIND the canvas crystal but in FRONT of the
+     orange world; it is no longer rendered inside WebGL / behind the glass. -->
+<section class="hero">
+  <div id="hero">
+    <div class="hwords">
+      <span class="hl" data-text="PIZZA">PIZZA</span>
+      <span class="hl hl-in" data-text="PASSION">PASSION</span>
+      <span class="hl" data-text="PRECISION">PRECISION</span>
+    </div>
+    <div class="hbody">
+      <p class="sc" data-text="A pizza engineered like a cut jewel.">A pizza engineered like a cut jewel.</p>
+      <p class="sc" data-text="Slow-fermented dough, blistered edges, precision in every slice.">Slow-fermented dough, blistered edges, precision in every slice.</p>
+    </div>
+  </div>
+</section>
 
 <div class="heroix mono" id="heroix">[ 001 ] PIZZA / PASSION / PRECISION</div>
 <div class="scroll-hint" id="scrollhint"><span>Scroll for more</span><div class="bar"></div></div>
@@ -234,9 +267,8 @@
   <div class="footer mono"><span>ULLIS.PIZZA</span><span>© 2026 — Forno Italiano</span></div>
 </section>
 
-<!-- three.js 0.137 (UMD): r129+ adds the scene-behind transmission render pass, so the crystal's
-     MeshPhysicalMaterial.transmission can refract the 3D headline plane behind it (the KODE effect).
-     r128 only refracts the environment map, not scene geometry, so a version >= r129 is required.
+<!-- three.js 0.137 (UMD). The crystal is now a CHEAP amber MeshPhysicalMaterial (NO transmission) +
+     an InstancedMesh tile grid for the scroll dissolve — both run buttery on a low-end GPU.
      jsDelivr primary; unpkg fallback in case of a CDN hiccup (same exact build/version). -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js"></script>
 <script>window.THREE||document.write('<script src="https://unpkg.com/three@0.137.0/build/three.min.js"><\/script>');</script>
@@ -265,14 +297,13 @@
     dof:        !LOW                 // cinematic depth-of-field (desktop tier)
   };
 
-  const renderer=new THREE.WebGLRenderer({antialias:!LOW,alpha:true,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,Q.dpr));
+  const renderer=new THREE.WebGLRenderer({antialias:!LOW,alpha:true,premultipliedAlpha:false,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(1.5,devicePixelRatio,Q.dpr));   // hard 1.5 cap -> fill-rate friendly on this 8GB PC
   renderer.setSize(W,H);
-  // OPAQUE warm clear (alpha 1): the canvas is now the orange world itself, giving the transmissive
-  // crystal a real opaque backdrop (orange + the in-scene headline plane) to REFRACT. This is what makes
-  // the type warp THROUGH the glass. The hero headline lives in the 3D scene (see HERO HEADLINE below),
-  // not as DOM behind a transparent canvas — so transmission/IOR can distort it like real glass.
-  renderer.setClearColor(new THREE.Color(0xf5430b),1);
+  // TRANSPARENT clear (alpha 0): transmission is gone, so the canvas no longer needs to BE the backdrop.
+  // The orange world is the CSS #stage behind the canvas, and the giant Didone headline lives in the DOM
+  // (cropped, bleeding off the top) — NOT behind the glass anymore.
+  renderer.setClearColor(new THREE.Color(0xf5430b),0);
   renderer.shadowMap.enabled=false;                 // glass is ethereal; grounding handled by a soft contact-shadow sprite
   renderer.outputEncoding=THREE.sRGBEncoding;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;  // restrained exposure -> clear crystal, type reads through the glass (not blown white)
@@ -367,17 +398,18 @@
     return crown+lump - dip*dip*0.10;}
 
   // ---- GLASS materials ----
-  // Desktop: real MeshPhysicalMaterial transmission/refraction (warm, low roughness, clearcoat + iridescence), tinted to refract orange.
-  // Mobile/LOW: lighter translucent reflective amber (NO transmission) -> env reflection + clearcoat carry the glass read.
+  // Desktop: CHEAP warm-amber translucent crystal (NO transmission -> no per-frame scene re-render). Clearcoat
+  // + HDRI env reflection carry the glassy sheen; alpha + emissive make it a luminous amber jewel.
+  // Mobile/LOW: lighter translucent reflective amber (also NO transmission).
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xfff7ec, metalness:0.0, roughness:0.015,        // near-optically-clear hand-cut crystal
-        transmission:1.0, ior:1.5, thickness:1.18,             // full transmission + thicker body -> the headline behind bends/lenses elegantly through the glass
-        attenuationColor:new THREE.Color(0xff9a55), attenuationDistance:7.5,  // warm tint, long distance = luminous & clear, never grey
-        clearcoat:0.35, clearcoatRoughness:0.09,               // light lacquer only -> NO bright mirror sheet across the face (that white sheen was hiding the glass)
-        iridescence:0.04, iridescenceIOR:1.25, iridescenceThicknessRange:[160,420], // whisper of sparkle only (no milky film)
-        specularIntensity:0.45, specularColor:new THREE.Color(0xfff3e0),  // softened specular -> face stays see-through, not a cream sheet
-        envMapIntensity:0.55, emissive:0x1a0b04, emissiveIntensity:0.035 })  // low env reflection -> you look THROUGH the crystal to the distorted type
+        // CHEAP warm-amber translucent crystal — NO scene transmission (that re-rendered the whole scene
+        // to a target every frame and froze scrolling). Reads as a luminous amber jewel against the orange world.
+        color:0xff8a3d, metalness:0.0, roughness:0.12,
+        transmission:0.0, transparent:true, opacity:0.82,      // simple alpha translucency, not a window to the scene
+        clearcoat:1.0, clearcoatRoughness:0.06,                // glassy lacquer sheen
+        envMapIntensity:1.25,                                  // HDRI reflections carry the "glass" read
+        emissive:0x331405, emissiveIntensity:0.12 })           // subtle warm inner glow -> never pale/white
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
         transmission:0.0, ior:1.46, transparent:true, opacity:0.58,   // lighter translucent amber glass for mobile
@@ -387,11 +419,10 @@
   // frosted / etched glass cornicione rim
   const cornMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xffe7cb, metalness:0.0, roughness:0.34,        // lightly etched crystal edge (less frosted -> less white)
-        transmission:0.6, ior:1.46, thickness:0.55,
+        // etched amber crust edge — also transmission-free so it never triggers the scene transmission pass
+        color:0xff9a4e, metalness:0.0, roughness:0.34, transparent:true, opacity:0.9,
         clearcoat:0.6, clearcoatRoughness:0.25,
-        iridescence:0.1, iridescenceIOR:1.3,
-        envMapIntensity:0.8, emissive:0x140a03, emissiveIntensity:0.03 })
+        envMapIntensity:1.0, emissive:0x2a1206, emissiveIntensity:0.08 })
     : new THREE.MeshPhysicalMaterial({
         color:0xffe9cf, metalness:0.0, roughness:0.46, transparent:true, opacity:0.8,
         clearcoat:0.6, clearcoatRoughness:0.3,
@@ -500,162 +531,67 @@
     pizza.add(wholeDisc);
   })();
 
-  pizza.rotation.x=0.52;pizza.position.y=0.14;          // oblique 3/4 view (top toward viewer)
+  pizza.rotation.x=0.44;pizza.position.y=0.14;          // gentler tilt -> reads as a round pizza, not a flat bowl
 
-  // ===== 3D HERO HEADLINE — rendered IN-SCENE so the crystal's transmission REFRACTS it ============
-  // The giant cropped Bodoni words PIZZA / PASSION / PRECISION are drawn to a canvas texture on an
-  // OPAQUE plane positioned BEHIND the pizza. Because the clearColor is now opaque, this plane is the
-  // transmission backdrop: where the crystal covers the type it warps it (real glass refraction); where
-  // it doesn't, the type reads crisp. A per-frame canvas re-raster powers the KODE scramble-decode.
-  const HERO_LINES=['PIZZA','PASSION','PRECISION'];
-  const HCW=LOW?1280:2048;                 // canvas width (px) — height derived from plane aspect
-  let HCH=1152;
-  const HERO_Z=-5.0, HERO_M=1.6;           // plane depth (behind pizza) + oversize factor (covers the tilted frustum)
-  const heroCanvas=document.createElement('canvas'); heroCanvas.width=HCW; heroCanvas.height=HCH;
-  const heroCtx=heroCanvas.getContext('2d');
-  const heroTex=new THREE.CanvasTexture(heroCanvas);
-  heroTex.minFilter=THREE.LinearFilter; heroTex.magFilter=THREE.LinearFilter; heroTex.generateMipmaps=false;
-  if(renderer.capabilities && renderer.capabilities.getMaxAnisotropy) heroTex.anisotropy=renderer.capabilities.getMaxAnisotropy();
-  const heroMat=new THREE.MeshBasicMaterial({map:heroTex});      // unlit flat editorial type (opaque -> in transmission backdrop)
-  const heroPlane=new THREE.Mesh(new THREE.PlaneGeometry(1,1),heroMat);
-  const heroGroup=new THREE.Group(); heroGroup.add(heroPlane); scene.add(heroGroup);
-  let heroVW=18, heroVH=10, heroBaseY=0;   // visible world dims at HERO_Z + the world-y that maps to screen-centre
-  let heroEnds=null, heroF=0, heroDecoding=false, heroSettled=false, heroBg=null;
-  const HGLY='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+*/<>[]#=';
-  function buildHeroEnds(){
-    let n=0; HERO_LINES.forEach(l=>n+=l.length); heroEnds=new Array(n);
-    const base=LOW?7:9, per=LOW?0.7:0.95, jit=LOW?8:12;
-    for(let i=0;i<n;i++) heroEnds[i]=base+i*per+Math.random()*jit;
+  // ===== DOM HERO HEADLINE — the giant cropped Bodoni words now live in the DOM (#hero), bleeding off
+  // the TOP edge of the viewport (KODE style). The type is NO LONGER behind the glass — the canvas is
+  // transparent and the crystal sits in front of the orange world. The scramble-decode runs on the DOM
+  // spans via the existing scramble() machinery; here we just expose a startHeroDecode() hook + a
+  // per-frame scroll parallax that lifts the headline up & off as you scroll, matching the old feel.
+  const heroEl=document.getElementById('hero');
+  const heroLineEls=heroEl?Array.from(heroEl.querySelectorAll('.hl')):[];
+  function startHeroDecode(){
+    if(!heroEl) return;
+    heroEl.style.opacity='1';
+    if(LOW||SHOT){ heroLineEls.forEach(el=>{el.textContent=el.dataset.text; el.dataset.done='1';}); return; }
+    heroLineEls.forEach(el=>scramble(el));   // KODE scramble/decode on the DOM headline
   }
-  function paintHeroBg(){                                // cache the warm orange backdrop (redraw only on resize)
-    heroBg=heroBg||document.createElement('canvas');
-    heroBg.width=HCW; heroBg.height=HCH; const x=heroBg.getContext('2d'), w=HCW, h=HCH;
-    const g=x.createLinearGradient(0,0,0,h);            // warm orange world gradient -> seamless refraction backdrop
-    g.addColorStop(0,'#ff9347'); g.addColorStop(0.46,'#f5430b'); g.addColorStop(1,'#bc1900');
-    x.fillStyle=g; x.fillRect(0,0,w,h);
-    const rg=x.createRadialGradient(w*0.5,h*0.12,8,w*0.5,h*0.12,h*0.72);   // soft top glow (matches the CSS world)
-    rg.addColorStop(0,'rgba(255,160,90,0.5)'); rg.addColorStop(1,'rgba(255,160,90,0)');
-    x.fillStyle=rg; x.fillRect(0,0,w,h);
-  }
-  function drawHero(){
-    const ctx=heroCtx, w=HCW, h=HCH;
-    if(!heroBg||heroBg.width!==w||heroBg.height!==h) paintHeroBg();
-    ctx.drawImage(heroBg,0,0);
-    // viewport sub-rect (centred) inside the oversized canvas
-    const vpW=w/HERO_M, vpH=h/HERO_M, ox=(w-vpW)/2, oy=(h-vpH)/2;
-    const fontPx=Math.min(vpW*0.185, vpH*0.36);
-    const tracking=-0.035*fontPx, lineH=fontPx*0.82;
-    ctx.fillStyle='#180600'; ctx.textBaseline='alphabetic';
-    ctx.font='900 '+fontPx+'px "Bodoni Moda", Georgia, serif';
-    const blockH=lineH*HERO_LINES.length;
-    const baseTop=oy+vpH*0.5 - blockH*0.5 + fontPx*0.78;
-    const leftBleed=ox - fontPx*0.06;
-    const lineX=[leftBleed, ox+vpW*0.085, leftBleed];   // PASSION pushed toward the crystal (asymmetric editorial balance)
-    const scrambling=heroDecoding && !heroSettled && heroEnds;
-    let gi=0;
-    for(let li=0; li<HERO_LINES.length; li++){
-      const word=HERO_LINES[li]; let x=lineX[li]; const by=baseTop+li*lineH;
-      for(let i=0;i<word.length;i++,gi++){
-        let ch=word[i];
-        if(scrambling && heroF<heroEnds[gi]) ch=HGLY[(Math.random()*HGLY.length)|0];
-        ctx.fillText(ch,x,by);
-        x += ctx.measureText(ch).width + tracking;
+  function fitHeroPlane(){/* no-op kept for resize hook compatibility (DOM hero is CSS-sized) */}
+
+  // ---- SCROLL DISSOLVE: KODE-style square-tile voxel grid (replaces the old particle cloud) ----
+  // The hero pizza pixelates into a grid of camera-facing square tiles in slightly-varying shades of
+  // orange (tone-on-tone, semi-transparent). As scrollOpen rises the solid pizza fades/shrinks out and
+  // the grid fades IN, each tile getting a small staggered drift + per-tile opacity ramp -> a gentle
+  // pixelated cascade, NOT an explosion. 81 instances -> updated on the CPU each frame (cheap).
+  const GRID_COLS=9, GRID_ROWS=9, GRID_N=GRID_COLS*GRID_ROWS;
+  const GRID_SPAN=RADIUS*2.05;                 // world footprint the grid covers (~the pizza disc)
+  const TILE=(GRID_SPAN/GRID_COLS)*0.92;       // small gutter between tiles -> visible grid
+  let voxMesh=null;
+  const voxData=[];                            // per-tile static params (base local x/y, drift dir, stagger, jitter)
+  (function buildVoxelGrid(){
+    const geo=new THREE.PlaneGeometry(TILE,TILE);
+    const mat=new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,depthTest:true,
+      blending:THREE.NormalBlending,opacity:0});       // global opacity ramps with scroll
+    voxMesh=new THREE.InstancedMesh(geo,mat,GRID_N);
+    voxMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    voxMesh.frustumCulled=false; voxMesh.renderOrder=2;
+    // per-instance color: slightly varying shades of orange around #ff5a1e (tone-on-tone)
+    const lo=new THREE.Color(0xe8480f), hi=new THREE.Color(0xff7a3a), c=new THREE.Color();
+    for(let r=0;r<GRID_ROWS;r++){
+      for(let col=0;col<GRID_COLS;col++){
+        const idx=r*GRID_COLS+col;
+        const lx=(col-(GRID_COLS-1)/2)*(GRID_SPAN/GRID_COLS);   // centred local grid position
+        const ly=((GRID_ROWS-1)/2-r)*(GRID_SPAN/GRID_ROWS);
+        const dist=Math.hypot(lx,ly)/(GRID_SPAN*0.7);           // centre tiles cascade in first
+        c.copy(lo).lerp(hi, Math.random());                     // random tone-on-tone shade
+        voxMesh.setColorAt(idx, c);
+        voxData.push({
+          lx, ly,
+          dr: Math.atan2(ly,lx)+(Math.random()-0.5)*0.6,        // outward-ish drift direction
+          stg: Math.min(0.9, dist*0.55 + Math.random()*0.35),   // per-tile staggered start (0..~0.9)
+          jx: (Math.random()-0.5),                              // small per-tile lateral jitter seed
+          jy: (Math.random()-0.5),
+          ph: Math.random()*TAU,
+          op: 0.5+Math.random()*0.42                            // per-tile peak opacity (semi-transparent)
+        });
       }
     }
-    heroTex.needsUpdate=true;
-  }
-  function fitHeroPlane(){
-    const fovV=34*Math.PI/180, dist=camBase.z-HERO_Z;
-    heroVH=2*Math.tan(fovV/2)*dist; heroVW=heroVH*(W/H);
-    const dirY=camLook.y-camBase.y, dirZ=camLook.z-camBase.z;   // world-y on the plane that lands at screen-centre
-    heroBaseY=camBase.y + ((HERO_Z-camBase.z)/dirZ)*dirY;
-    const pw=heroVW*HERO_M, ph=heroVH*HERO_M;
-    HCH=Math.max(256,Math.round(HCW*(ph/pw)));
-    if(heroCanvas.height!==HCH) heroCanvas.height=HCH;
-    heroPlane.geometry.dispose(); heroPlane.geometry=new THREE.PlaneGeometry(pw,ph);
-    drawHero();
-  }
-  function startHeroDecode(){
-    if(LOW||SHOT){ heroDecoding=false; heroSettled=true; drawHero(); return; }   // mobile/screenshot -> crisp, no re-raster cost
-    buildHeroEnds(); heroF=0; heroDecoding=true; heroSettled=false;
-  }
-  fitHeroPlane();
-  // re-rasterise once the Bodoni webfont is actually ready (first draw may use a serif fallback)
-  if(document.fonts && document.fonts.ready){
-    try{ document.fonts.load('900 120px "Bodoni Moda"'); }catch(e){}
-    document.fonts.ready.then(()=>{ if(!heroDecoding) drawHero(); });
-  }
-
-  // ---- SCROLL DISSOLVE: a cloud of orange cubes the crystal breaks into (KODE squares) ----
-  // All motion runs in the vertex shader (one draw call) and is driven by a single uDiss uniform,
-  // so it stays buttery and cheap even on the LOW tier (count is gated below).
-  const PCOUNT = LOW?230:1180;   // denser cloud for a real showpiece on desktop; kept modest on the LOW tier
-  let partsMat=null, partsPts=null;
-  (function buildParticles(){
-    const N=PCOUNT, g=new THREE.BufferGeometry();
-    const pos=new Float32Array(N*3), rnd=new Float32Array(N*3), ph=new Float32Array(N), scl=new Float32Array(N);
-    const v=new THREE.Vector3();
-    for(let k=0;k<N;k++){
-      const a=Math.random()*TAU, r=RADIUS*Math.sqrt(Math.random())*0.97;
-      const x=Math.cos(a)*r, z=-Math.sin(a)*r;
-      const y=0.05+Math.random()*(THICK-0.02)+reliefY(x,z)*0.4;
-      pos[k*3]=x; pos[k*3+1]=y; pos[k*3+2]=z;
-      v.set(x,0,z); if(v.lengthSq()<1e-5)v.set(1,0,0); v.normalize();   // mostly-radial outward burst + jitter + upward bias (bolder magnitudes)
-      rnd[k*3]  =v.x*(0.72+Math.random()*1.26)+(Math.random()-0.5)*0.80;
-      rnd[k*3+1]=0.58+Math.random()*1.92;
-      rnd[k*3+2]=v.z*(0.72+Math.random()*1.26)+(Math.random()-0.5)*0.80;
-      ph[k]=Math.random()*TAU; scl[k]=0.55+Math.random()*1.10;
-    }
-    g.setAttribute('position',new THREE.BufferAttribute(pos,3));
-    g.setAttribute('aRnd',new THREE.BufferAttribute(rnd,3));
-    g.setAttribute('aPh',new THREE.BufferAttribute(ph,1));
-    g.setAttribute('aScl',new THREE.BufferAttribute(scl,1));
-    partsMat=new THREE.ShaderMaterial({
-      transparent:true, depthWrite:false, depthTest:true, blending:THREE.NormalBlending,
-      uniforms:{ uDiss:{value:0}, uTime:{value:0},
-                 uSize:{value:LOW?7.8:9.8}, uDpr:{value:Math.min(devicePixelRatio,Q.dpr)},
-                 uCol:{value:new THREE.Color(0xff5a1f)}, uCol2:{value:new THREE.Color(0xffc27a)} },
-      vertexShader:[
-        'attribute vec3 aRnd; attribute float aPh; attribute float aScl;',
-        'uniform float uDiss; uniform float uTime; uniform float uSize; uniform float uDpr;',
-        'varying float vA; varying float vM; varying float vRot;',
-        'void main(){',
-        '  float d = clamp(uDiss,0.0,1.0);',
-        '  float spread = d*d;',                              // ease-in burst
-        '  vec3 p = position;',
-        '  p += aRnd * spread * 6.0;',                        // BOLD wide scatter -> a real explosion cloud
-        '  p.y += spread * 2.9;',                             // lift the whole cloud higher
-        '  p.x += sin(uTime*0.8 + aPh)*0.18*d;',             // gentle turbulence so the cloud breathes
-        '  p.z += cos(uTime*0.7 + aPh*1.3)*0.18*d;',
-        '  p.y += sin(uTime*0.9 + aPh)*0.10*d;',
-        '  vA = smoothstep(0.02,0.12,d) * (1.0 - smoothstep(0.66,0.96,d));',  // appear fast, linger longer, then clear before content covers
-        '  vM = aScl;',
-        '  vRot = aPh*1.7 + uTime*(0.26 + (aScl-1.0)*0.38);',  // varied per-cube tumble (direction+speed from scale)
-        '  vec4 mv = modelViewMatrix * vec4(p,1.0);',
-        '  gl_PointSize = uSize * aScl * uDpr * (1.0 + d*0.95) * (13.0 / max(0.001,-mv.z));',
-        '  gl_Position = projectionMatrix * mv;',
-        '}'].join('\n'),
-      fragmentShader:[
-        'uniform vec3 uCol; uniform vec3 uCol2;',
-        'varying float vA; varying float vM; varying float vRot;',
-        'void main(){',
-        '  vec2 q = gl_PointCoord - 0.5;',
-        '  float cs=cos(vRot), sn=sin(vRot);',               // rotate the square -> varied cube orientation
-        '  q = vec2(q.x*cs - q.y*sn, q.x*sn + q.y*cs);',
-        '  float m = max(abs(q.x),abs(q.y));',               // crisp square (sized to fit the sprite when rotated)
-        '  float edge = 1.0 - smoothstep(0.26,0.34,m);',
-        '  if(edge<=0.003) discard;',
-        '  vec3 deep = vec3(0.85,0.24,0.06);',               // richer deep ember floor of the tonal range
-        '  float ct = clamp(vM-0.3,0.0,1.0);',
-        '  vec3 col = mix(deep, uCol, smoothstep(0.0,0.5,ct));',   // deep ember -> bright orange -> warm peach
-        '  col = mix(col, uCol2, smoothstep(0.5,1.0,ct));',
-        '  float op = 0.56 + 0.44*clamp(vM-0.4,0.0,1.0);',   // varied opacity per cube
-        '  gl_FragColor = vec4(col, vA*edge*op);',
-        '}'].join('\n')
-    });
-    partsPts=new THREE.Points(g,partsMat); partsPts.frustumCulled=false; partsPts.renderOrder=2;
-    pizza.add(partsPts);
+    if(voxMesh.instanceColor) voxMesh.instanceColor.needsUpdate=true;
+    voxMesh.visible=false;
+    scene.add(voxMesh);     // world-space: billboarded + positioned each frame to track the pizza
   })();
+  const _vQ=new THREE.Quaternion(), _vP=new THREE.Vector3(), _vS=new THREE.Vector3(),
+        _vM=new THREE.Matrix4(), _vScl=new THREE.Vector3();
 
   // ---- interaction: hover (desktop) / touch-and-hold (mobile) -> full-pizza bloom; release -> reassemble ----
   const ray=new THREE.Raycaster();
@@ -907,13 +843,11 @@
     document.getElementById('scrollhint').style.opacity=(1-s*2.2).toFixed(2);
     heroix.style.opacity=(0.62-s*1.4).toFixed(2);
 
-    // 3D hero headline: scroll the giant type up & off with the hero, and run the scramble re-raster
-    heroGroup.position.y = heroBaseY + lerp(0, heroVH*1.35, Math.min(1, s/0.72));
-    if(heroDecoding && heroEnds){
-      heroF += LOW?2.2:1.5;
-      let allDone=true; for(let i=0;i<heroEnds.length;i++){ if(heroF<heroEnds[i]){allDone=false;break;} }
-      drawHero();
-      if(allDone){ heroDecoding=false; heroSettled=true; drawHero(); }
+    // DOM hero headline: scroll the giant cropped type UP & off, fading as section 2 rises (KODE feel)
+    if(heroEl){
+      const hp=Math.min(1, s/0.72);
+      heroEl.style.transform='translateY('+(-hp*42).toFixed(1)+'svh)';
+      heroEl.style.opacity=(1-Math.min(1,Math.max(0,(s-0.30)/0.42))).toFixed(3);
     }
 
     // hover detection
@@ -980,9 +914,47 @@
       g.scale.setScalar(Math.max(0.0008, 1.0-dl));
     });
 
-    // drive the orange particle cloud (scroll-linked dissolve); skip drawing it entirely at rest
-    partsPts.visible = scrollOpen>0.001;
-    if(partsPts.visible){ partsMat.uniforms.uTime.value=t; partsMat.uniforms.uDiss.value=scrollOpen; }
+    // drive the KODE square-tile voxel grid (scroll-linked dissolve); hidden entirely at rest.
+    // The grid lives in world space: each frame we position it at the pizza's on-screen footprint,
+    // billboard it to face the camera, and update the 81 instance matrices + a per-tile staggered
+    // opacity that pixelates the pizza into a loose drifting grid as scrollOpen climbs.
+    if(voxMesh){
+      voxMesh.visible = scrollOpen>0.002;
+      if(voxMesh.visible){
+        // grid centre = pizza-group origin in world space (follows OFFX, scroll-lift, scale via pizzaWrap)
+        pizza.updateWorldMatrix(true,false);
+        const me=pizza.matrixWorld.elements;
+        const cx=me[12], cy=me[13], cz=me[14];             // pizza origin in world space
+        _vScl.setFromMatrixScale(pizza.matrixWorld);
+        const gscale=_vScl.x;                              // uniform scale from pizzaWrap
+        _vQ.copy(camera.quaternion);                       // billboard: every tile faces the camera
+        // global grid opacity: invisible at rest, fades in early, fades to near-gone by scrollOpen~1
+        const fadeIn=Math.min(1, scrollOpen/0.32);
+        const fadeOut=1.0-Math.min(1, Math.max(0,(scrollOpen-0.55)/0.45));
+        voxMesh.material.opacity=0.92*fadeIn*fadeOut;
+        for(let k=0;k<GRID_N;k++){
+          const d=voxData[k];
+          // per-tile progress: staggered so tiles pixelate IN as a centre-out cascade
+          let tp=(scrollOpen-d.stg*0.5)/0.6; tp=tp<0?0:(tp>1?1:tp);
+          tp=tp*tp*(3.0-2.0*tp);                            // smoothstep
+          // gentle drift apart (loose grid, NOT an explosion) + soft idle breathing
+          const drift=tp*GRID_SPAN*0.18;
+          const px=d.lx + Math.cos(d.dr)*drift + Math.sin(t*0.6+d.ph)*0.04*tp + d.jx*tp*0.10;
+          const py=d.ly + Math.sin(d.dr)*drift + Math.cos(t*0.5+d.ph)*0.04*tp + d.jy*tp*0.10;
+          // local (billboard-plane) offset rotated to camera orientation, scaled with the pizza
+          _vP.set(px*gscale, py*gscale, 0).applyQuaternion(_vQ);
+          _vP.x+=cx; _vP.y+=cy; _vP.z+=cz;
+          // per-tile fade: appears with its own stagger (tp), then drifts/fades out late in the scroll.
+          // (MeshBasicMaterial instanceColor has no per-instance alpha, so the staggered cascade is
+          //  carried by collapsing each tile's SCALE to ~0 until/after its window — global opacity sets tone.)
+          const tileA=tp*(1.0-Math.min(1,Math.max(0,(scrollOpen-0.6-d.stg*0.25)/0.4)));
+          _vS.setScalar( tileA<0.04 ? 0.0001 : gscale*(0.96+tp*0.06) );
+          _vM.compose(_vP,_vQ,_vS);
+          voxMesh.setMatrixAt(k,_vM);
+        }
+        voxMesh.instanceMatrix.needsUpdate=true;
+      }
+    }
 
     // hover/scroll-driven glow: jewel bloom intensity + gold fresnel rim rise as the crystal opens (restrained on scroll so the cloud reads cleanly, not blown out)
     if(compMat)compMat.uniforms.bloom.value=0.12+bloom*0.30+scrollOpen*0.10;
@@ -1044,7 +1016,7 @@
       document.querySelectorAll('.sc').forEach(el=>{el.style.opacity='1';el.textContent=el.dataset.text;el.dataset.done='1';});
       startHeroDecode(); return;
     }
-    // the hero headline now lives in the 3D scene; it scramble-decodes in-canvas (and refracts through the glass)
+    // the hero headline now lives in the DOM (#hero); it scramble-decodes the giant cropped Bodoni words
     startHeroDecode();
   }
   if(DEMO||SHOT){revealType();}
