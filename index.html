@@ -171,7 +171,7 @@
     <line x1="18" y1="18" x2="22" y2="22"/><line x1="32" y1="32" x2="36" y2="36"/>
     <line x1="36" y1="18" x2="32" y2="22"/><line x1="22" y1="32" x2="18" y2="36"/>
   </g></g></svg></div>
-<div id="cutlabel">Drag to slice</div>
+<div id="cutlabel">Click to pull apart</div>
 
 <div id="stage"></div>
 <div id="scene"></div>
@@ -194,7 +194,7 @@
 
 <div class="scroll-hint" id="scrollhint"><span>Scroll for more</span><div class="bar"></div></div>
 <div class="corner-ar" id="cornerar">[ 4K ]</div>
-<div class="touch-hint">Tap &amp; drag a slice to pull it</div>
+<div class="touch-hint">Tap the pizza to pull it apart</div>
 
 <section class="mastery">
   <div class="eyebrow reveal">— The Maestro · Ullis Pizza</div>
@@ -235,8 +235,8 @@
     capRings:   LOW?16:36,           // displaced-cap radial subdivisions
     capASegMul: LOW?64:118,          // displaced-cap angular subdivisions (per full turn)
     pep:        false,               // R7: discrete 3D pepperoni dropped -> clean photo+displacement (fixes doubling)
-    strBridge:  LOW?7:15,            // cheese bridge strands per cut edge (more = gooier pull)
-    strSag:     LOW?3:6,             // cheese sag-drip strands per cut edge
+    strBridge:  LOW?2:4,             // cheese bridge strands per GAP (8 gaps total) — keep modest, performant
+    strSag:     LOW?1:2,             // cheese sag-drip strands per wedge (cheese drooping off the top cut face)
     strPts:     LOW?12:18,           // samples per strand
     strRad:     LOW?6:8,             // radial segments per strand tube
     steam:      LOW?3:6,             // just a few faint white heat-wisps (mostly removed)
@@ -658,91 +658,117 @@
   pizza.rotation.x=0.52;pizza.position.y=0.14;  // POSITIVE tilt → top toward the viewer (more oblique 3/4)
 
   // ---- cheese pull strands (signature) — real 3D tubes that STICK at both ends and stretch ----
-  // bridge strands: one end anchored to the neighbour/gap cut edge (stationary), other end to the
-  //   pulled wedge's cut edge -> they get longer + thinner (neck) as the slice travels, then snap.
-  // sag strands: cheese clinging off the pulled wedge's exposed cut face, drooping down (drip).
-  const PTS=Q.strPts, NB=Q.strBridge, NS=Q.strSag;               // R7: counts tier-scaled (mobile lighter) — still abundant, gooey pull
-  const strandMatBase=new THREE.MeshStandardMaterial({color:0xf2c45a,roughness:0.34,metalness:0.0,emissive:0x281a05,emissiveIntensity:0.35,envMapIntensity:1.1,transparent:true,opacity:0});
+  // PER-GAP rewrite: there are SLICES (8) gaps. Gap g sits between slice[g] and slice[(g+1)%SLICES] at
+  //   shared boundary angle ang=((g+1)/SLICES)*TAU. BOTH wedges move (explode/hover-lift), so a bridge
+  //   strand's two ends ride slice[g].matrix and slice[(g+1)%SLICES].matrix from the SAME rest point P
+  //   on the boundary -> the strand literally spans the widening gap as the two slices separate.
+  // sag strands: cheese clinging off ONE wedge's exposed top cut face, drooping down (drip).
+  const PTS=Q.strPts, NB=Q.strBridge, NS=Q.strSag;               // counts tier-scaled (mobile lighter)
+  // gooier/warmer golden cheese, slightly translucent + emissive so the strands glow appetisingly
+  const strandMatBase=new THREE.MeshStandardMaterial({color:0xf0c25a,roughness:0.30,metalness:0.0,emissive:0x33220a,emissiveIntensity:0.42,envMapIntensity:1.15,transparent:true,opacity:0});
+  // cheese sits ON TOP -> strands originate from the upper ~45% of the cheese layer ONLY (near the surface), then sag/drop
+  const cheeseLo=D1+D2+D3*0.55, cheeseHi=THICK;
   const cheeseStrands=[];
-  function makeStrand(type,edge,clumps){
+  function makeBridge(g,clumps){
     const mat=strandMatBase.clone();
     const mesh=new THREE.Mesh(new THREE.BufferGeometry(),mat);mesh.frustumCulled=false;mesh.visible=false;mesh.castShadow=false;pizza.add(mesh);
-    // R6: CLUMPED attach radius — bunch around a few random clump centers (no even curtain) + jitter
+    // CLUMPED attach radius along the boundary — bunch around a few clump centers + jitter, then clamp 0.12..0.95
     const c=clumps[Math.floor(Math.random()*clumps.length)];
     let posR=c+(Math.random()-0.5)*0.11+(Math.random()-0.5)*0.05;
-    posR=Math.max(0.07,Math.min(0.96,posR));
-    // R6: THICKNESS TIERS — a few thick hero ropes + many medium + some thin + occasional wisp
+    posR=Math.max(0.12,Math.min(0.95,posR));
+    // THICKNESS TIERS — a few thick hero ropes + many medium + some thin + occasional wisp
     let thick,wisp=false;const roll=Math.random();
-    if(type==='bridge'){
-      if(roll<0.13){thick=1.7+Math.random()*0.95;}        // hero ropes
-      else if(roll<0.66){thick=0.72+Math.random()*0.58;}  // medium
-      else if(roll<0.88){thick=0.38+Math.random()*0.30;}  // thin
-      else{thick=0.16+Math.random()*0.16;wisp=true;}      // wisps
-    } else { thick=(roll<0.25?1.3+Math.random()*0.7:0.6+Math.random()*0.7); } // sags: mostly mid, a few fat
-    return {mesh,mat,type,edge,
-      posR,                                 // clumped attach radius along the cut edge
-      attF:Math.random(),                   // full random across the cheese-layer height
+    if(roll<0.15){thick=1.8+Math.random()*1.0;}          // hero ropes (neck + thin as they stretch)
+    else if(roll<0.66){thick=0.72+Math.random()*0.60;}   // medium
+    else if(roll<0.88){thick=0.38+Math.random()*0.30;}   // thin
+    else{thick=0.16+Math.random()*0.16;wisp=true;}       // wisps
+    return {mesh,mat,type:'bridge',gap:g,
+      posR,                                 // clumped attach radius along the shared boundary
+      attF:Math.random(),                   // height across the TOP cheese (cheeseLo..cheeseHi)
       thick,
-      breakL:1.9+Math.random()*2.7,         // strongly varied hold/snap length → irregular break-up
-      curl:(Math.random()-0.5)*0.72,        // varied curl/wander
-      sagK:0.40+Math.random()*1.25,         // varied droop
-      ph:Math.random()*6.28,
-      jit:(Math.random()-0.5)*0.10,         // attach-point jitter along the edge
-      hang:0.24+Math.random()*0.62,         // sag-drips droop further off the cut face
-      wisp};
+      breakL:1.7+Math.random()*2.4,         // varied break length on the gap distance |A-B| → irregular snap
+      curl:(Math.random()-0.5)*0.55,        // lateral wander
+      sagK:0.40+Math.random()*1.20,         // varied catenary droop
+      ph:Math.random()*6.28, wisp};
   }
-  for(let e=0;e<2;e++){
-    const nc=3+Math.floor(Math.random()*2);                // 3–4 irregular clump centers per edge
-    const clumps=[];for(let c=0;c<nc;c++)clumps.push(0.13+Math.random()*0.80);
-    for(let k=0;k<NB;k++)cheeseStrands.push(makeStrand('bridge',e,clumps));
-    for(let k=0;k<NS;k++)cheeseStrands.push(makeStrand('sag',e,clumps));
+  function makeSag(i){
+    const mat=strandMatBase.clone();
+    const mesh=new THREE.Mesh(new THREE.BufferGeometry(),mat);mesh.frustumCulled=false;mesh.visible=false;mesh.castShadow=false;pizza.add(mesh);
+    const roll=Math.random();
+    return {mesh,mat,type:'sag',si:i,
+      edge:Math.random()<0.5?0:1,           // which of the wedge's two cut edges it droops from
+      posR:0.20+Math.random()*0.66,
+      attF:Math.random(),
+      thick:(roll<0.25?1.3+Math.random()*0.7:0.6+Math.random()*0.7),
+      curl:(Math.random()-0.5)*0.72,
+      hang:0.24+Math.random()*0.62, ph:Math.random()*6.28};
   }
+  // bridge strands: NB per gap, across all SLICES gaps
+  for(let g=0;g<SLICES;g++){
+    const nc=3+Math.floor(Math.random()*2);                // 3–4 irregular clump centers per gap
+    const clumps=[];for(let c=0;c<nc;c++)clumps.push(0.14+Math.random()*0.78);
+    for(let k=0;k<NB;k++)cheeseStrands.push(makeBridge(g,clumps));
+  }
+  // sag-drips: NS per wedge, hanging off its exposed top cut face
+  for(let i=0;i<SLICES;i++){for(let k=0;k<NS;k++)cheeseStrands.push(makeSag(i));}
 
-  function updateStrands(slice,t){
-    if(!slice){for(const s of cheeseStrands)s.mesh.visible=false;return;}
-    const L=slice.userData.lift, d=slice.userData.dir;
-    slice.updateMatrix(); const M=slice.matrix;                    // moved anchors ride the wedge's FULL transform (incl. R5 tilt)
-    const fade=Math.min(1,Math.max(0,(L-0.12)/0.22));
-    const edges=[slice.userData.a0, slice.userData.a1];
-    const cheeseLo=D1+D2, cheeseHi=THICK;                          // strands originate in the cheese layer
+  const _A=new THREE.Vector3(),_B=new THREE.Vector3(),_P=new THREE.Vector3();
+  function updateStrands(t){
+    // BOTH endpoints of every bridge ride moving wedge matrices → ensure all matrices are fresh first
+    for(const sl of slices)sl.updateMatrix();
     for(const s of cheeseStrands){
-      const ang=edges[s.edge];
-      const tang=new THREE.Vector3(-Math.sin(ang),0,-Math.cos(ang)); // horizontal, along the cut edge
-      const rr=RADIUS*s.posR+s.jit;
-      const attY=cheeseLo+(cheeseHi-cheeseLo)*s.attF;
-      const A=new THREE.Vector3(Math.cos(ang)*rr, attY, -Math.sin(ang)*rr); // rest = stationary neighbour's cut edge
       if(s.type==='bridge'){
-        const snap=Math.max(0,Math.min(1,1-(L-s.breakL)/0.6));
-        if(L<0.12||snap<=0.02){s.mesh.visible=false;continue;}
-        const B=A.clone().applyMatrix4(M);                         // moved wedge's cut edge (tilt + travel)
-        const stretch=Math.max(0,Math.min(1,(L-0.3)/1.4));
-        const sag=Math.min(1.7,L*0.95)*s.sagK;
+        const sa=slices[s.gap], sb=slices[(s.gap+1)%SLICES];
+        const La=sa.userData.lift, Lb=sb.userData.lift, Lm=Math.max(La,Lb);
+        if(Lm<0.10){s.mesh.visible=false;continue;}
+        const ang=((s.gap+1)/SLICES)*TAU;                 // shared boundary angle (matches a1 of slice[g] / a0 of slice[g+1])
+        const rr=RADIUS*s.posR;
+        const attY=cheeseLo+(cheeseHi-cheeseLo)*s.attF;
+        // SAME rest point P on the boundary -> transformed by each wedge's matrix (the -sin(ang) convention)
+        _P.set(Math.cos(ang)*rr, attY, -Math.sin(ang)*rr);
+        _A.copy(_P).applyMatrix4(sa.matrix);              // rides slice[g]
+        _B.copy(_P).applyMatrix4(sb.matrix);              // rides slice[g+1]
+        const gapD=_A.distanceTo(_B);                     // widening gap distance
+        // hide when slices are together (tiny gap); snap (hide) past break length
+        if(gapD<0.045){s.mesh.visible=false;continue;}
+        const snap=Math.max(0,Math.min(1,1-(gapD-s.breakL)/0.7));
+        if(snap<=0.02){s.mesh.visible=false;continue;}
+        const fade=Math.min(1,Math.max(0,(gapD-0.06)/0.22));
+        // lateral tangent along the boundary (for curl) + catenary sag scaled by the gap distance
+        const tang=new THREE.Vector3(-Math.sin(ang),0,-Math.cos(ang));
+        const sag=Math.min(2.2,gapD*0.85)*s.sagK;        // droop downward in the middle, scaled by separation
         const pts=[];
         for(let p=0;p<PTS;p++){const tt=p/(PTS-1),env=Math.sin(Math.PI*tt);
           const cz=s.curl*env*(0.5+0.5*Math.sin(t*2+s.ph));
           pts.push(new THREE.Vector3(
-            A.x+(B.x-A.x)*tt+tang.x*cz,
-            A.y+(B.y-A.y)*tt-env*sag,
-            A.z+(B.z-A.z)*tt+tang.z*cz));}
-        const globalThin=Math.max(0.36,1-L*0.10);                  // stay thick much longer
-        const baseR=(s.wisp?0.036:0.152)*s.thick*globalThin*Math.sqrt(snap); // thicker, fuller, gooier strands
-        const rfn=tt=>{const ends=0.56+0.44*Math.abs(2*tt-1);const neck=1-0.44*Math.sin(Math.PI*tt)*stretch;return Math.max(0.009,baseR*ends*neck);};
+            _A.x+(_B.x-_A.x)*tt+tang.x*cz,
+            _A.y+(_B.y-_A.y)*tt-env*sag,                  // catenary: sag down in the middle
+            _A.z+(_B.z-_A.z)*tt+tang.z*cz));}
+        const stretch=Math.max(0,Math.min(1,(gapD-0.3)/1.6)); // necks/thins as it stretches
+        const globalThin=Math.max(0.32,1-gapD*0.12);
+        const baseR=(s.wisp?0.034:0.150)*s.thick*globalThin*Math.sqrt(snap);
+        const rfn=tt=>{const ends=0.56+0.44*Math.abs(2*tt-1);const neck=1-0.46*Math.sin(Math.PI*tt)*stretch;return Math.max(0.008,baseR*ends*neck);};
         const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,PTS-1,s.wisp?Math.min(6,Q.strRad):Q.strRad);if(old)old.dispose();
         s.mat.opacity=0.97*fade*snap; s.mesh.visible=true;
-      } else {                                                     // sag-drip clinging off the exposed cut face
-        if(L<0.20){s.mesh.visible=false;continue;}
-        const top=A.clone().applyMatrix4(M);                       // hangs from the moved/tilted cut face
-        const grow=Math.min(1,(L-0.20)/0.9);
-        const hang=s.hang*(0.7+1.3*grow);                          // droops further
+      } else {                                            // sag-drip clinging off ONE wedge's exposed top cut face
+        const sl=slices[s.si], L=sl.userData.lift;
+        if(L<0.18){s.mesh.visible=false;continue;}
+        const ang=s.edge===0?sl.userData.a0:sl.userData.a1;
+        const rr=RADIUS*s.posR;
+        const attY=cheeseLo+(cheeseHi-cheeseLo)*s.attF;
+        const top=new THREE.Vector3(Math.cos(ang)*rr, attY, -Math.sin(ang)*rr).applyMatrix4(sl.matrix);
+        const tang=new THREE.Vector3(-Math.sin(ang),0,-Math.cos(ang));
+        const grow=Math.min(1,(L-0.18)/0.8);
+        const hang=s.hang*(0.7+1.3*grow);                 // droops further as the wedge lifts
         const pts=[
           top.clone(),
           new THREE.Vector3(top.x+tang.x*s.curl*0.30, top.y-hang*0.40, top.z+tang.z*s.curl*0.30),
           new THREE.Vector3(top.x+tang.x*s.curl*0.55, top.y-hang*0.86, top.z+tang.z*s.curl*0.55),
           new THREE.Vector3(top.x+tang.x*s.curl*0.64, top.y-hang*1.20, top.z+tang.z*s.curl*0.64)];
         const fat=s.thick;
-        const rfn=tt=>Math.max(0.009,(0.078+0.055*Math.sin(tt*Math.PI))*fat*(1-Math.pow(tt,5))); // chunkier cheese sags
+        const rfn=tt=>Math.max(0.008,(0.076+0.052*Math.sin(tt*Math.PI))*fat*(1-Math.pow(tt,5)));
         const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,Q.strPts-4,Q.strRad);if(old)old.dispose();
-        s.mat.opacity=0.96*Math.min(1,fade+0.25)*grow; s.mesh.visible=true;
+        s.mat.opacity=0.96*grow; s.mesh.visible=true;
       }
     }
   }
@@ -766,12 +792,16 @@
   // ---- interaction ----
   const ray=new THREE.Raycaster();
   const mouse=new THREE.Vector2(-2,-2);
-  let hovered=-1, grabbed=-1, pull=0, lastX=0,lastY=0, dragDist=0, wheelAngle=0, lastMoveT=0;
+  // NEW interaction state machine:
+  //   hovered = wedge under cursor (raycast). On hover, the hovered wedge + its two neighbours gently LIFT.
+  //   exploded = toggled by click/tap on the pizza. When true ALL 8 wedges push apart (large lift) → cheese spans every gap.
+  //   Clicking again, or the pointer leaving the pizza/scene, sets exploded=false → spring eases everything back.
+  let hovered=-1, exploded=false, wheelAngle=0, lastMoveT=0, lastX=0;
   const dot=document.getElementById('dot'),cutter=document.getElementById('cutter'),wheel=cutter.querySelector('.wheel'),cutlabel=document.getElementById('cutlabel');
   let mx=W/2,my=H/2,dx=W/2,dy=H/2;
 
   function setMouse(px,py){const r=renderer.domElement.getBoundingClientRect();mouse.x=((px-r.left)/r.width)*2-1;mouse.y=-((py-r.top)/r.height)*2+1;mx=px;my=py;}
-  // immediate raycast — touch must know on FIRST contact whether a wedge was grabbed (hover lags a frame)
+  // immediate raycast — touch must know on FIRST contact whether the tap landed on the pizza (hover lags a frame)
   function pickAt(px,py){
     const r=renderer.domElement.getBoundingClientRect();
     const v=new THREE.Vector2(((px-r.left)/r.width)*2-1, -((py-r.top)/r.height)*2+1);
@@ -779,24 +809,22 @@
     const ms=[];slices.forEach(g=>g.children.forEach(c=>{if(c.userData&&c.userData.si!==undefined)ms.push(c);}));
     const hit=ray.intersectObjects(ms,false);return hit.length?hit[0].object.userData.si:-1;
   }
-  const PULLDIV=isTouch?150:200;                                    // touch a touch more sensitive (smaller screens)
-  function onDown(px,py){setMouse(px,py);lastX=px;lastY=py;dragDist=0;
+  function setLabel(){cutlabel.textContent=exploded?'Click to reassemble':'Click to pull apart';}
+  function onDown(px,py){setMouse(px,py);lastX=px;
     let h=hovered; if(h<0)h=pickAt(px,py);
-    if(h>=0){grabbed=h;hovered=h;cutlabel.textContent='Slicing';playSlice();}}
+    if(h>=0){exploded=!exploded;hovered=h;setLabel();playSlice();}}      // tap the pizza → toggle exploded
   function onMove(px,py){
-    if(grabbed>=0){dragDist+=Math.hypot(px-lastX,py-lastY);pull=Math.min(2.0,dragDist/PULLDIV);}
-    wheelAngle+=(px-lastX)*0.6; lastX=px;lastY=py;lastMoveT=performance.now();setMouse(px,py);
+    wheelAngle+=(px-lastX)*0.6; lastX=px;lastMoveT=performance.now();setMouse(px,py);
   }
-  function onUp(){grabbed=-1;pull=0;cutlabel.textContent='Drag to slice';}
+  function onLeave(){exploded=false;setLabel();mouse.set(-2,-2);}        // pointer leaves pizza/scene → reassemble
   addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
   addEventListener('mousedown',e=>onDown(e.clientX,e.clientY));
-  addEventListener('mouseup',onUp);
-  // ---- TOUCH: non-passive so we can preventDefault DURING an active slice drag (page must not scroll while slicing).
-  //      When the touch is NOT on a wedge, we never preventDefault, so normal vertical scroll still works. ----
-  sceneEl.addEventListener('touchstart',e=>{const t=e.touches[0];if(!t)return;onDown(t.clientX,t.clientY);if(grabbed>=0)e.preventDefault();},{passive:false});
-  sceneEl.addEventListener('touchmove',e=>{const t=e.touches[0];if(!t)return;if(grabbed>=0)e.preventDefault();onMove(t.clientX,t.clientY);},{passive:false});
-  sceneEl.addEventListener('touchend',e=>{onUp();mouse.set(-2,-2);},{passive:false});
-  sceneEl.addEventListener('touchcancel',e=>{onUp();mouse.set(-2,-2);},{passive:false});
+  sceneEl.addEventListener('mouseleave',onLeave);
+  // ---- TOUCH: a tap toggles exploded. We only preventDefault when the tap is ON the pizza, so normal page scroll still works. ----
+  sceneEl.addEventListener('touchstart',e=>{const t=e.touches[0];if(!t)return;const before=exploded;onDown(t.clientX,t.clientY);if(exploded!==before)e.preventDefault();},{passive:false});
+  sceneEl.addEventListener('touchmove',e=>{const t=e.touches[0];if(!t)return;onMove(t.clientX,t.clientY);},{passive:false});
+  sceneEl.addEventListener('touchend',e=>{mouse.set(-2,-2);},{passive:false});
+  sceneEl.addEventListener('touchcancel',e=>{onLeave();},{passive:false});
   setTimeout(()=>{cutter.classList.add('show');cutlabel.classList.add('show');},800);
 
   let pYaw=0,pPit=0,camPX=0,camPY=0;
@@ -917,7 +945,7 @@
           Q.blurIters=1; Q.dof=false;
           if(compMat){compMat.uniforms.dofAmt.value=0.0; compMat.uniforms.ca.value=0.0;}
           resizePP(); } } } }
-    if(DEMO){grabbed=6;pull=1.18;}   // pull a FRONT wedge toward the camera: keeps the lifted slice + cross-section fully in frame
+    if(DEMO){exploded=true;}   // static demo shows ALL slices fallen apart with cheese spanning every gap
 
     // cursor follow
     dx=lerp(dx,mx,0.2);dy=lerp(dy,my,0.2);
@@ -933,7 +961,7 @@
     camera.position.z=lerp(camera.position.z, camBase.z+Math.cos(t*0.10)*0.42, 0.06);
     camera.lookAt(camLook);
 
-    pizza.rotation.y+=dt*0.12*(grabbed>=0?0.04:1);
+    pizza.rotation.y+=dt*0.12*(exploded?0.04:1);
     pizzaWrap.rotation.y=lerp(pizzaWrap.rotation.y,pYaw,0.05);
     pizzaWrap.rotation.x=lerp(pizzaWrap.rotation.x,pPit,0.05);
     const bob=Math.sin(t*0.85)*0.09;pizza.position.y=0.14+bob;
@@ -949,17 +977,20 @@
       const ms=[];slices.forEach(g=>g.children.forEach(c=>{if(c.userData&&c.userData.si!==undefined)ms.push(c);}));
       const hit=ray.intersectObjects(ms,false);hovered=hit.length?hit[0].object.userData.si:-1;
     }else hovered=-1;
-    const overPizza=(hovered>=0||grabbed>=0);
+    const overPizza=(hovered>=0||exploded);
     cutter.classList.toggle('show', overPizza && !isTouch);
     cutlabel.classList.toggle('show', overPizza && !isTouch);
 
-    // slice spring physics
-    let activeSlice=null;
+    // slice spring physics — exploded: ALL wedges fly apart; else hover lifts the hovered wedge + its 2 neighbours
+    const HOVER_C=0.20, HOVER_N=0.11, EXPLODE=0.9;                 // small hover lifts; big exploded lift
     slices.forEach(g=>{
       let tgt=0;
-      if(g.userData.i===grabbed){tgt=pull;activeSlice=g;}
-      else if(g.userData.i===hovered && grabbed<0){tgt=0.42;activeSlice=g;}  // single gooey pull on hover (one wedge eases out + cheese strands)
-      // R7: buttery critically-damped spring — frame-rate independent, no jitter; glides out, eases back smoothly
+      if(exploded){tgt=EXPLODE;}                                   // every slice pushes outward + up + tilt
+      else if(hovered>=0){
+        const i=g.userData.i, dgap=Math.min((i-hovered+SLICES)%SLICES,(hovered-i+SLICES)%SLICES);
+        if(dgap===0)tgt=HOVER_C; else if(dgap===1)tgt=HOVER_N;     // hovered wedge + its two immediate neighbours gently rise
+      }
+      // buttery critically-damped spring — frame-rate independent, no jitter; glides out, eases back smoothly
       const omega=13.0, expf=Math.exp(-omega*dt);
       const delta=g.userData.lift-tgt, temp=(g.userData.vel+omega*delta)*dt;
       g.userData.lift=tgt+(delta+temp)*expf;
@@ -976,7 +1007,7 @@
       g.position.set(ox+C.x-Cr.x, oy+C.y-Cr.y, oz+C.z-Cr.z);       // pivot the tilt about the wedge centroid, then travel
       g.updateMatrix();
     });
-    updateStrands(activeSlice,t);
+    updateStrands(t);
 
     puffs.forEach(p=>{p.position.y+=dt*p.userData.sp;
       const life=(p.position.y-0.55)/3.0;
