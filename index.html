@@ -20,7 +20,7 @@
 <meta property="og:title" content="Ullis Pizza — Pizza. Passion. Precision." />
 <meta property="og:description" content="Handcrafted pepperoni pizza by maestro Ulli Haus. An immersive 3D pizza experience — slice it and watch the cheese pull." />
 <meta property="og:url" content="https://zilli-on.github.io/ullis-pizza/" />
-<meta property="og:image" content="https://zilli-on.github.io/ullis-pizza/assets/pizza_top.jpg" />
+<meta property="og:image" content="https://zilli-on.github.io/ullis-pizza/assets/cap_color.jpg" />
 <meta property="og:image:alt" content="Top-down handcrafted pepperoni pizza — Ullis Pizza" />
 <meta property="og:locale" content="en" />
 
@@ -28,7 +28,7 @@
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Ullis Pizza — Pizza. Passion. Precision." />
 <meta name="twitter:description" content="Handcrafted pepperoni pizza by maestro Ulli Haus. An immersive 3D pizza experience." />
-<meta name="twitter:image" content="https://zilli-on.github.io/ullis-pizza/assets/pizza_top.jpg" />
+<meta name="twitter:image" content="https://zilli-on.github.io/ullis-pizza/assets/cap_color.jpg" />
 
 <!-- Structured data (Restaurant). TODO Fabi: add real address/telephone/openingHours/menu URL for full local-SEO rich results. -->
 <script type="application/ld+json">
@@ -38,7 +38,7 @@
   "name": "Ullis Pizza",
   "description": "Handcrafted pepperoni pizza by maestro Ulli Haus. Pizza. Passion. Precision.",
   "url": "https://zilli-on.github.io/ullis-pizza/",
-  "image": "https://zilli-on.github.io/ullis-pizza/assets/pizza_top.jpg",
+  "image": "https://zilli-on.github.io/ullis-pizza/assets/cap_color.jpg",
   "servesCuisine": ["Pizza", "Italian"],
   "slogan": "Pizza. Passion. Precision.",
   "founder": { "@type": "Person", "name": "Ulli Haus", "jobTitle": "Pizza Maestro" }
@@ -408,8 +408,8 @@
 
   // ---- R8: load the REAL measured PBR set (all share the cap's inset top-down planar UV → perfectly aligned) ----
   let photoReady=false;
-  texLoader.load('assets/cap_color.jpg?v=pep2', function(tex){
-    tex.encoding=THREE.sRGBEncoding; tex.anisotropy=8;
+  texLoader.load('assets/cap_color.jpg?v=pep3enh', function(tex){
+    tex.encoding=THREE.sRGBEncoding; tex.anisotropy=16;
     cheeseMat.map=tex; cheeseMat.color.setHex(0xffffff); cheeseMat.needsUpdate=true; photoReady=true;
   }, undefined, function(){photoReady=true;});
   // DISABLED: these measured relief maps are the leftover MARGHERITA (Pizza002) set -> they mismatch the pepperoni photo.
@@ -523,7 +523,7 @@
       }catch(e){/* pepperoni optional */}
     }catch(e){/* keep TextureLoader albedo */} };
     img.onerror=function(){};
-    img.src='assets/pizza_top.jpg';
+    img.src='assets/cap_color.jpg?v=pep3enh';   // derive coherent relief from the ENHANCED pepperoni photo
   })();
 
   // contact shadow
