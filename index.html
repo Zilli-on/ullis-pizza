@@ -369,7 +369,7 @@
 
   // ---- R8: load the REAL measured PBR set (all share the cap's inset top-down planar UV → perfectly aligned) ----
   let photoReady=false;
-  texLoader.load('assets/cap_color.jpg', function(tex){
+  texLoader.load('assets/cap_color.jpg?v=pep2', function(tex){
     tex.encoding=THREE.sRGBEncoding; tex.anisotropy=8;
     cheeseMat.map=tex; cheeseMat.color.setHex(0xffffff); cheeseMat.needsUpdate=true; photoReady=true;
   }, undefined, function(){photoReady=true;});
