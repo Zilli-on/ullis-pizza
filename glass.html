@@ -378,13 +378,13 @@
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
         color:0xffffff, metalness:0.0, roughness:0.012,             // optically sharp -> crisp glossy glints + clear refraction
-        transmission:1.0, ior:1.52, thickness:1.18,                 // thicker body -> the text behind LENS-distorts clearly through the glass
+        transmission:1.0, ior:1.5, thickness:0.7,                   // CLEAR thin crystal -> text reads true through it (not absorbed to grey)
         transparent:true,
-        clearcoat:1.0, clearcoatRoughness:0.02,                      // hard glossy lacquer sheen
-        attenuationColor:new THREE.Color(0xffb877), attenuationDistance:11.0,  // light warm tint, long distance = clear (not a pale wash)
+        clearcoat:1.0, clearcoatRoughness:0.02,                      // hard glossy lacquer sheen (the gloss = crisp point-light glints, not env wash)
+        attenuationColor:new THREE.Color(0xffeede), attenuationDistance:40.0,  // almost no tint -> clear glass, not a pink milky wash
         specularIntensity:1.0,
-        envMapIntensity:1.9,                                         // strong glossy reflections -> reads as real glass
-        emissive:0x000000, emissiveIntensity:0.0 })                  // no flat core wash -> contrast + gloss return
+        envMapIntensity:0.45,                                        // LOW env -> kills the uniform milky wash; gloss comes from the bright point-light glints
+        emissive:0x000000, emissiveIntensity:0.0 })
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
         transmission:0.0, ior:1.46, transparent:true, opacity:0.6,   // lighter translucent amber glass for mobile
@@ -905,8 +905,8 @@
     });
 
     // hover-driven glow: jewel bloom intensity + gold fresnel rim rise as the crystal opens
-    if(compMat)compMat.uniforms.bloom.value=0.12+bloom*0.30;
-    fresnelMat.uniforms.uIntensity.value=0.14+bloom*0.78;
+    if(compMat)compMat.uniforms.bloom.value=0.08+bloom*0.30;
+    fresnelMat.uniforms.uIntensity.value=0.07+bloom*0.78;     // thin bright glass edge, not a cream wash
 
     // skip the (now-invisible) canvas render once the hero has fully scrolled away -> keeps the
     // content sections perfectly smooth; resumes instantly when scrolling back up or on hover.
