@@ -911,7 +911,8 @@
       if(g.userData.i===grabbed){tgt=pull;activeSlice=g;}
       else if(hovered>=0 && grabbed<0){
         let d=Math.abs(g.userData.i-hovered); d=Math.min(d,SLICES-d);   // circular distance from the hovered wedge
-        tgt = d===0?0.5 : d===1?0.34 : d===2?0.18 : 0;                  // FAN: several slices ease out on hover (not just one)
+        tgt = d===0?0.62 : d===1?0.30 : d===2?0.14 : 0;                 // FAN: hovered wedge lifts most + gooey strands; neighbours ease less
+        if(d===0) activeSlice=g;                                        // hovered wedge shows cheese strands on hover (not just on drag)
       }
       // R7: buttery critically-damped spring — frame-rate independent, no jitter; glides out, eases back smoothly
       const omega=13.0, expf=Math.exp(-omega*dt);
