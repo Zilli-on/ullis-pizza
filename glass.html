@@ -316,33 +316,50 @@
   const spec=new THREE.PointLight(0xfffaf0,1.1,18);spec.position.set(1.2,5.2,3.6);scene.add(spec);   // ONE small concentrated crisp glint
   const glint=new THREE.PointLight(0xffffff,0.7,16);glint.position.set(-3.2,3.6,5.2);scene.add(glint);  // small secondary glint as it rotates
 
-  // procedural fallback environment (used until / unless the HDRI loads) — warm orange studio
-  (function setupEnvFallback(){
-    const c=document.createElement('canvas');c.width=512;c.height=256;const x=c.getContext('2d');
-    const g=x.createLinearGradient(0,0,0,256);
-    g.addColorStop(0,'#fff2dc');g.addColorStop(0.42,'#ff8a3c');g.addColorStop(0.72,'#df3d0a');g.addColorStop(1,'#5e0f00');
-    x.fillStyle=g;x.fillRect(0,0,512,256);
-    const h=x.createRadialGradient(150,66,4,150,66,120);h.addColorStop(0,'rgba(255,255,255,0.95)');h.addColorStop(1,'rgba(255,255,255,0)');
-    x.fillStyle=h;x.beginPath();x.arc(150,66,120,0,7);x.fill();
-    const h2=x.createRadialGradient(380,108,4,380,108,90);h2.addColorStop(0,'rgba(255,200,140,0.7)');h2.addColorStop(1,'rgba(255,200,140,0)');
-    x.fillStyle=h2;x.beginPath();x.arc(380,108,90,0,7);x.fill();
-    const eq=new THREE.CanvasTexture(c);eq.mapping=THREE.EquirectangularReflectionMapping;
+  // ---- HIGH-CONTRAST STUDIO ENVIRONMENT (procedural equirect) — drives crisp polished-glass reflections.
+  // Dark charcoal field with a few BRIGHT soft vertical light streaks/softboxes (white->warm) plus a faint
+  // brighter horizon band -> the rotating crystal shows sharp bright glints sliding across (not a milky veil).
+  // Only scene.environment is set (reflections); scene.background stays unset so the orange world is untouched.
+  let studioEnv=null;
+  (function setupStudioEnv(){
+    const c=document.createElement('canvas');c.width=1024;c.height=512;const x=c.getContext('2d');
+    // near-black charcoal base
+    x.fillStyle='#0a0a0a';x.fillRect(0,0,1024,512);
+    // subtle brighter horizon band (slightly lifts the lower-mid so reflections aren't pure void)
+    const hb=x.createLinearGradient(0,150,0,420);
+    hb.addColorStop(0,'rgba(40,38,36,0)');hb.addColorStop(0.45,'rgba(72,66,60,0.85)');
+    hb.addColorStop(0.55,'rgba(72,66,60,0.85)');hb.addColorStop(1,'rgba(28,26,24,0)');
+    x.fillStyle=hb;x.fillRect(0,150,1024,270);
+    // soft bright vertical softboxes — varied x positions. Each is a tall elliptical radial glow
+    // (gaussian-ish falloff in BOTH axes via scaling) so it reads as a studio softbox: hot core, soft edges,
+    // tapering at top/bottom -> the rotating glass catches it as a crisp bright streak, not a flat veil.
+    // cx=center x, cy=center y, hw=half-width, hh=half-height, core='rgba(...)'
+    function streak(cx,cy,hw,hh,core){
+      x.save();x.globalCompositeOperation='lighter';
+      x.translate(cx,cy);x.scale(hw/hh,1);                // squash a circular radial into a tall ellipse
+      const g=x.createRadialGradient(0,0,2,0,0,hh);
+      g.addColorStop(0,core);
+      g.addColorStop(0.45,core.replace(/[\d.]+\)$/,'0.45)'));
+      g.addColorStop(1,'rgba(255,255,255,0)');
+      x.fillStyle=g;x.beginPath();x.arc(0,0,hh,0,7);x.fill();
+      x.restore();
+    }
+    // 4 softboxes across the equirect: dominant cool key + warm fill + a slim crisp accent + a warm wrap
+    streak(190, 240, 95, 300, 'rgba(255,255,255,0.95)');   // bright cool key (broad, dominant)
+    streak(470, 250, 60, 230, 'rgba(255,242,224,0.78)');   // warm fill
+    streak(720, 235, 34, 270, 'rgba(255,255,255,0.92)');   // slim crisp accent -> sharp moving glint
+    streak(910, 250, 52, 210, 'rgba(255,234,204,0.66)');   // warm wrap accent
+    const eq=new THREE.CanvasTexture(c);eq.mapping=THREE.EquirectangularReflectionMapping;eq.encoding=THREE.sRGBEncoding;
     try{const pm=new THREE.PMREMGenerator(renderer);pm.compileEquirectangularShader();
-      scene.environment=pm.fromEquirectangular(eq).texture;pm.dispose();}
-    catch(e){scene.environment=eq;}
+      studioEnv=pm.fromEquirectangular(eq).texture;scene.environment=studioEnv;pm.dispose();eq.dispose();}
+    catch(e){scene.environment=eq;studioEnv=eq;}
   })();
 
-  // ---- real HDRI environment (Poly Haven, tonemapped) — drives believable glass reflection/refraction ----
-  const texLoader=new THREE.TextureLoader();
-  let ready=false;
-  texLoader.load('assets/studio_env_2k.jpg', function(tex){
-    tex.mapping=THREE.EquirectangularReflectionMapping;
-    try{const pm=new THREE.PMREMGenerator(renderer);pm.compileEquirectangularShader();
-      const env=pm.fromEquirectangular(tex).texture; scene.environment=env; pm.dispose(); tex.dispose();}
-    catch(e){tex.mapping=THREE.EquirectangularReflectionMapping; scene.environment=tex;}
-    ready=true;
-  }, undefined, function(){ready=true;});
-  setTimeout(()=>{ready=true;},3000);                 // safety so the loader never hangs
+  // No external HDRI load — the procedural studio map above is the reflection environment. (The old
+  // assets/studio_env_2k.jpg HDRI assignment is intentionally removed so it can't overwrite the studio map
+  // with a soft uniform veil.) The studio env is built synchronously, so `ready` is true immediately and
+  // the loader's [ ENTER ] moment is paced purely by its own progress timer below.
+  let ready=true;                                     // studio env is ready synchronously
 
   // contact shadow (soft, light — the glass should feel grounded but ethereal; warm-red so it doesn't go muddy on orange)
   function shadowTex(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
@@ -377,19 +394,19 @@
   // through via the low opacity.
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xffffff, metalness:0.0, roughness:0.012,             // optically sharp -> crisp glossy glints + clear refraction
+        color:0xffffff, metalness:0.0, roughness:0.02,              // optically sharp -> crisp glossy streak reflections + clear refraction
         transmission:1.0, ior:1.5, thickness:0.7,                   // CLEAR thin crystal -> text reads true through it (not absorbed to grey)
         transparent:true,
-        clearcoat:0.55, clearcoatRoughness:0.04,                     // lighter lacquer -> less surface veil, the text reads clearly through
-        attenuationColor:new THREE.Color(0xffeede), attenuationDistance:40.0,  // almost no tint -> clear glass, not a pink milky wash
+        clearcoat:0.8, clearcoatRoughness:0.04,                      // lacquer adds a second crisp specular layer for the streaks
+        attenuationColor:new THREE.Color(0xfff2e6), attenuationDistance:30.0,  // near-clear warm -> elegant crystal, not a pink milky wash
         specularIntensity:1.0,
-        envMapIntensity:0.45,                                        // LOW env -> kills the uniform milky wash; gloss comes from the bright point-light glints
+        envMapIntensity:1.3,                                         // HIGH-contrast studio env -> bright streak reflections slide across as it rotates
         emissive:0x000000, emissiveIntensity:0.0 })
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
         transmission:0.0, ior:1.46, transparent:true, opacity:0.6,   // lighter translucent amber glass for mobile
         clearcoat:1.0, clearcoatRoughness:0.08, reflectivity:0.62,
-        envMapIntensity:2.1, emissive:0x4a200c, emissiveIntensity:0.14 });
+        envMapIntensity:2.6, emissive:0x4a200c, emissiveIntensity:0.14 });   // bumped so the studio streaks still catch on mobile
 
   // frosted / etched glass cornicione rim
   const cornMat = Q.transmit
@@ -536,13 +553,13 @@
     x.fillStyle=HEAD_BG; x.fillRect(0,0,CW,CH);
     x.fillStyle='#0c0300';                                // giant black Didone words
     x.textAlign='center'; x.textBaseline='alphabetic';
-    const fontSize=Math.round(CW*0.26);                  // very large -> words bleed off the sides + top/bottom
+    const fontSize=Math.round(CW*0.15);                  // ~58% of the old 0.26 -> tasteful stacked block, not edge-to-edge
     x.font='900 '+fontSize+'px "Bodoni Moda", serif';
-    const lh=fontSize*0.82;                              // tight leading
-    // pull the block UP so the first word ("PIZZA") is cropped/bleeding off the top edge (KODE crop);
-    // the three stacked words are centred so PIZZA bleeds off the top and PRECISION nears the bottom.
+    const lh=fontSize*0.90;                              // a touch more leading so the smaller block breathes
+    // smaller block now: centre the three stacked words vertically so the pizza overlaps the middle word.
+    // Words may still crop slightly off the side edges but read clearly with breathing room (not chaos).
     const block=lh*(HEAD_WORDS.length-1);
-    const startY=CH*0.50 - block*0.5 + fontSize*0.34;    // first baseline (cap of word 0 crops off the top)
+    const startY=CH*0.50 - block*0.5 + fontSize*0.34;    // vertically-centred stacked block
     for(let i=0;i<HEAD_WORDS.length;i++){
       let word=HEAD_WORDS[i];
       if(decode<1){                                      // scramble each glyph until its per-word window passes
@@ -578,7 +595,7 @@
     const dist=Math.abs(camBase.z - TYPE_Z);
     const vH=2*Math.tan((34*Math.PI/180)/2)*dist;       // visible height of the frustum at the plane depth
     const vW=vH*(W/H);
-    typeH=vH*1.18; typeW=vW*1.18;                        // 18% margin so words crop off-edge
+    typeH=vH*1.12; typeW=vW*1.12;                        // 12% margin -> plane still covers the frustum; text size is governed by fontSize now
     typePlane.scale.set(typeW, typeH, 1);
     buildTypeCanvas();                                   // keep canvas aspect in sync
     rasterType(typeDecodeActive?typeDecode:1);
@@ -598,6 +615,19 @@
   const mouse=new THREE.Vector2(-2,-2);
   let hovered=-1, holding=false;
   let bloomTarget=0, bloom=0, bloomVel=0;
+
+  // ---- DRAG-ORBIT state: pointer-drag rotates the crystal (yaw + clamped pitch) with inertia/momentum ----
+  const BASE_TILT=0.46;                 // existing oblique pizza tilt (rotation.x base)
+  let dragging=false;                   // actively dragging (pointer held + moved past threshold)
+  let pointerDown=false;                // pointer is down over the canvas (may become a drag or a click/hover)
+  let downOnPizza=false;                // pointerdown landed on the pizza
+  let lastPX=0,lastPY=0;                // previous pointer position (for per-move delta)
+  let downPX=0,downPY=0;                // pointer-down origin (for drag-distance threshold)
+  let dragYawVel=0;                     // angular velocity of yaw (momentum, decays after release)
+  let dragYaw=0;                        // accumulated user yaw (added on top of the idle auto-spin)
+  let dragPitch=0;                      // accumulated user pitch offset (clamped around BASE_TILT)
+  const DRAG_THRESH=5;                  // px movement before a press counts as a drag (so a click stays hover)
+  const PITCH_CLAMP=0.25;               // pitch may swing +/-0.25 rad around the base tilt
   const dot=document.getElementById('dot'),cutter=document.getElementById('cutter'),cutlabel=document.getElementById('cutlabel');
   let mx=W/2,my=H/2,dx=W/2,dy=H/2;
 
@@ -619,6 +649,34 @@
   sceneEl.addEventListener('touchend',e=>{holding=false;mouse.set(-2,-2);},{passive:false});
   sceneEl.addEventListener('touchcancel',e=>{holding=false;mouse.set(-2,-2);},{passive:false});
   setTimeout(()=>{cutter.classList.add('show');},800);
+
+  // ---- POINTER DRAG-ORBIT (mouse + touch via Pointer Events) ----
+  // pointerdown over the pizza begins a potential drag; once movement exceeds DRAG_THRESH it becomes a real
+  // drag (rotate) which SUPPRESSES the hover-bloom. A click / tiny move stays below threshold -> plain hover.
+  sceneEl.addEventListener('pointerdown',e=>{
+    if(e.pointerType==='mouse' && e.button!==0) return;
+    pointerDown=true; downOnPizza=(pickAt(e.clientX,e.clientY)>=0);
+    lastPX=downPX=e.clientX; lastPY=downPY=e.clientY; dragging=false;
+    if(downOnPizza){ dragYawVel=0; sceneEl.style.cursor='grab'; }   // grab the crystal; momentum resets so it follows the hand
+  });
+  sceneEl.addEventListener('pointermove',e=>{
+    if(!pointerDown) return;
+    const ddx=e.clientX-lastPX, ddy=e.clientY-lastPY;
+    if(!dragging){
+      // promote to a real drag only after the threshold AND only if the press began on the pizza
+      if(downOnPizza && Math.hypot(e.clientX-downPX, e.clientY-downPY) > DRAG_THRESH){ dragging=true; sceneEl.style.cursor='grabbing'; }
+      else { lastPX=e.clientX; lastPY=e.clientY; return; }
+    }
+    // yaw from horizontal delta, clamped pitch from vertical delta
+    dragYaw += ddx*0.006;
+    dragYawVel = ddx*0.006;                                   // remember last delta -> momentum on release
+    dragPitch = Math.max(-PITCH_CLAMP, Math.min(PITCH_CLAMP, dragPitch + ddy*0.004));
+    lastPX=e.clientX; lastPY=e.clientY;
+    if(e.cancelable) e.preventDefault();                      // keep the drag from scrolling the page mid-rotate
+  });
+  addEventListener('pointerup',e=>{ pointerDown=false; dragging=false; downOnPizza=false; sceneEl.style.cursor=''; });
+  sceneEl.addEventListener('pointerleave',e=>{ if(!pointerDown){sceneEl.style.cursor='';} });
+  sceneEl.addEventListener('pointercancel',e=>{ pointerDown=false; dragging=false; downOnPizza=false; sceneEl.style.cursor=''; });
 
   let pYaw=0,pPit=0,camPX=0,camPY=0;
   addEventListener('mousemove',e=>{const nx=(e.clientX/W)*2-1,ny=(e.clientY/H)*2-1;pYaw=nx*0.34;pPit=ny*0.12;camPX=nx*0.55;camPY=ny*0.32;});
@@ -823,9 +881,17 @@
     camera.position.z=lerp(camera.position.z, camBase.z+Math.cos(t*0.10)*0.42, 0.06);
     camera.lookAt(camLook);
 
-    // SLOW IDLE ROTATION — always on, continuous, NOT gated behind hover/scroll. The crystal slowly
-    // turns around its vertical axis so the refracted text shifts as it spins.
-    pizza.rotation.y+=dt*0.12;                            // constant premium turntable
+    // ROTATION = slow idle auto-spin + user drag-orbit + inertia/momentum.
+    // While dragging, dragYaw is driven directly by the hand. On release, dragYawVel keeps applying with
+    // damping (~0.94/frame) so the crystal coasts, decaying back into the calm idle turntable.
+    if(!dragging){
+      dragYaw += dragYawVel;                              // coast on released momentum
+      dragYawVel *= 0.94;                                 // damping per frame
+      if(Math.abs(dragYawVel)<0.00012) dragYawVel=0;      // settle -> pure idle spin
+    }
+    pizza.rotation.y += dt*0.12 + dragYaw;               // idle turntable + accumulated user yaw
+    dragYaw=0;                                            // dragYaw is consumed each frame into rotation.y
+    pizza.rotation.x = BASE_TILT + dragPitch;            // base oblique tilt + clamped user pitch
     pizzaWrap.rotation.y=lerp(pizzaWrap.rotation.y, pYaw+Math.sin(t*0.13)*0.035, 0.05);  // alive-at-rest parallax drift
     pizzaWrap.rotation.x=lerp(pizzaWrap.rotation.x, pPit+Math.sin(t*0.10)*0.018, 0.05);
     const bob=Math.sin(t*0.6)*0.07;pizza.position.y=0.14+bob;   // gentle breathing float
@@ -847,11 +913,14 @@
       const hit=ray.intersectObjects(ms,false);hovered=hit.length?hit[0].object.userData.si:-1;
     }else hovered=-1;
 
-    // bloom target: hover (desktop) or touch-and-hold (mobile); demo forces bloomed
-    if(isTouch){ bloomTarget=holding?1:0; } else { bloomTarget=(hovered>=0)?1:0; }
+    // bloom target: hover (desktop) or touch-and-hold (mobile); demo forces bloomed.
+    // DRAGGING SUPPRESSES THE BLOOM -> dragging = rotate, plain hover = the cut/bloom effect.
+    if(dragging){ bloomTarget=0; }
+    else if(isTouch){ bloomTarget=holding?1:0; }
+    else { bloomTarget=(hovered>=0)?1:0; }
     if(DEMO){ bloomTarget=1; }
-    cutter.classList.toggle('show', (hovered>=0) && !isTouch);
-    cutlabel.classList.toggle('show', (hovered>=0) && !isTouch);
+    cutter.classList.toggle('show', (hovered>=0) && !isTouch && !dragging);
+    cutlabel.classList.toggle('show', (hovered>=0) && !isTouch && !dragging);
 
     // global bloom: slow, buttery critically-damped spring (frame-rate independent) — elegant, no bounce
     { const omega=4.4, expf=Math.exp(-omega*dt);
