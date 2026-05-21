@@ -811,8 +811,9 @@
   }
   function setLabel(){cutlabel.textContent=exploded?'Click to reassemble':'Click to pull apart';}
   function onDown(px,py){setMouse(px,py);lastX=px;
+    if(exploded){exploded=false;setLabel();return;}                      // already apart → ANY click reassembles (slices scattered, don't require a wedge hit)
     let h=hovered; if(h<0)h=pickAt(px,py);
-    if(h>=0){exploded=!exploded;hovered=h;setLabel();playSlice();}}      // tap the pizza → toggle exploded
+    if(h>=0){exploded=true;hovered=h;setLabel();playSlice();}}           // click ON the pizza → fall apart
   function onMove(px,py){
     wheelAngle+=(px-lastX)*0.6; lastX=px;lastMoveT=performance.now();setMouse(px,py);
   }
