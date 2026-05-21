@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
-<meta name="theme-color" content="#F5430B" />
+<meta name="theme-color" content="#0d0806" />
 <link rel="icon" href="data:," />
 <title>ULLIS PIZZA — Glass · Pizza Passion Precision</title>
 <!--
@@ -17,36 +17,43 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,700..900;1,6..96,700..900&family=Playfair+Display:ital,wght@0,700;0,900;1,900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root{ --orange:#F5430B; --orange-deep:#C9370A; --ink:#160a05; --cream:#F7E9D6; }
+  :root{
+    --bg:#0d0806; --bg2:#130d08; --bg3:#1a1209;      /* espresso / warm near-black */
+    --gold:#c8a55a; --gold-soft:#d8bd86; --gold-bright:#ecd29a;  /* antique -> bright gold */
+    --champagne:#f1e6cf; --cream:#f4ead6; --ink:#160a05;
+    --amber:#c98a3c;
+  }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html{scroll-behavior:smooth;}
-  html,body{background:var(--orange);color:var(--ink);font-family:"DM Mono",monospace;overflow-x:hidden;}
+  html,body{background:var(--bg);color:var(--champagne);font-family:"DM Mono",monospace;overflow-x:hidden;}
   body{cursor:none;}
   @media(hover:none){body{cursor:auto;}}
   a{color:inherit;text-decoration:none;}
-  ::selection{background:var(--ink);color:var(--orange);}
+  ::selection{background:var(--gold);color:var(--bg);}
 
-  /* warm cinematic stage glow behind the pizza (sits under canvas + type) */
-  #stage{position:fixed;inset:0;z-index:1;pointer-events:none;
+  /* warm museum-spotlight glow behind the pizza — a pool of light on deep espresso (under canvas + type) */
+  #stage{position:fixed;inset:0;z-index:1;pointer-events:none;background:var(--bg);}
+  #stage:before{content:"";position:absolute;inset:0;
     background:
-      radial-gradient(54% 50% at 50% 46%, rgba(255,176,104,.40) 0%, rgba(255,135,60,.15) 36%, rgba(245,67,11,0) 70%),
-      radial-gradient(120% 120% at 50% 122%, rgba(96,24,4,.52) 0%, rgba(96,24,4,0) 56%);}
+      radial-gradient(46% 42% at 50% 45%, rgba(255,206,140,.20) 0%, rgba(200,130,58,.085) 40%, rgba(13,8,6,0) 72%),
+      radial-gradient(130% 120% at 50% 118%, rgba(82,42,16,.30) 0%, rgba(13,8,6,0) 58%),
+      radial-gradient(100% 80% at 50% 8%, rgba(50,30,14,.22) 0%, rgba(13,8,6,0) 46%);}
 
   #scene{position:fixed;inset:0;z-index:3;touch-action:pan-y;will-change:transform,opacity;}
 
-  #grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.06;mix-blend-mode:multiply;
+  #grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.055;mix-blend-mode:soft-light;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     animation:grainmove 1.1s steps(3) infinite;}
   @keyframes grainmove{0%{transform:translate(0,0);}33%{transform:translate(-4%,2%);}66%{transform:translate(3%,-3%);}100%{transform:translate(0,0);}}
   #vignette{position:fixed;inset:0;z-index:59;pointer-events:none;
-    background:radial-gradient(122% 102% at 50% 40%,transparent 50%,rgba(34,9,2,.46) 100%);}
+    background:radial-gradient(125% 105% at 50% 42%,transparent 48%,rgba(6,3,1,.66) 100%);}
 
   /* minimal glass reticle cursor */
   #cutter{position:fixed;top:0;left:0;width:50px;height:50px;pointer-events:none;z-index:9999;
     transform:translate(-50%,-50%);opacity:0;transition:opacity .3s ease, width .3s, height .3s;mix-blend-mode:difference;}
   #cutter.show{opacity:1;}
   #cutter svg{width:100%;height:100%;display:block;}
-  #dot{position:fixed;top:0;left:0;width:8px;height:8px;border-radius:50%;background:var(--ink);
+  #dot{position:fixed;top:0;left:0;width:7px;height:7px;border-radius:50%;background:#f1e6cf;
     pointer-events:none;z-index:9998;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:opacity .3s;}
   #cutlabel{position:fixed;top:0;left:0;transform:translate(-50%,32px);pointer-events:none;z-index:9999;
     font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#fff;mix-blend-mode:difference;opacity:0;transition:opacity .25s;white-space:nowrap;}
@@ -54,64 +61,78 @@
   @media(hover:none){#cutter,#dot,#cutlabel{display:none;}}
 
   header{position:fixed;top:0;left:0;width:100%;z-index:100;display:flex;justify-content:space-between;
-    align-items:center;padding:22px 32px;font-size:12px;letter-spacing:2px;text-transform:uppercase;
-    font-weight:500;mix-blend-mode:difference;color:#fff;}
-  header .mid{display:flex;gap:34px;}
-  @media(max-width:680px){header .mid{display:none;}header{padding:15px 18px;font-size:11px;}}
+    align-items:center;padding:24px 36px;font-size:11px;letter-spacing:3px;text-transform:uppercase;
+    font-weight:500;color:var(--champagne);
+    border-bottom:1px solid rgba(200,165,90,.16);
+    background:linear-gradient(to bottom, rgba(13,8,6,.42) 0%, rgba(13,8,6,0) 100%);
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
+  header .brand{color:var(--gold-soft);letter-spacing:3.5px;}
+  header .mid{display:flex;gap:38px;opacity:.82;}
+  header .mid #soundtoggle{cursor:pointer;transition:color .3s;}
+  header .mid #soundtoggle:hover{color:var(--gold-bright);}
+  header .contact{transition:color .3s;}header .contact:hover{color:var(--gold-bright);}
+  @media(max-width:680px){header .mid{display:none;}header{padding:16px 20px;font-size:10px;letter-spacing:2.4px;}}
 
   .hero{position:relative;width:100%;height:100svh;z-index:2;}
   .hero-type{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
     justify-content:center;text-align:center;pointer-events:none;font-family:"Bodoni Moda",serif;
-    font-weight:900;color:var(--ink);line-height:.80;letter-spacing:-0.048em;z-index:2;will-change:transform;
-    text-shadow:0 2px 40px rgba(60,16,2,.18);}
-  .hero-type .l{display:block;font-size:clamp(58px,17.4vw,280px);text-transform:uppercase;transform:translateY(115%);opacity:0;}
-  .hero-type .l.it{font-style:italic;}
+    font-weight:900;color:var(--champagne);line-height:.84;letter-spacing:-0.012em;z-index:2;will-change:transform;
+    text-shadow:0 0 64px rgba(214,168,90,.30), 0 2px 34px rgba(0,0,0,.42);}
+  .hero-type .l{display:block;font-size:clamp(58px,17.2vw,278px);text-transform:uppercase;transform:translateY(115%);opacity:0;}
+  .hero-type .l.it{font-style:italic;color:var(--gold-bright);letter-spacing:0.004em;
+    text-shadow:0 0 72px rgba(214,168,90,.42), 0 2px 30px rgba(0,0,0,.4);}
   .hero-type .l.mid{position:relative;z-index:0;}
 
-  .scroll-hint{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:40;font-size:11px;
-    letter-spacing:3px;text-transform:uppercase;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:.85;transition:opacity .4s;}
-  .scroll-hint .bar{width:1px;height:34px;background:var(--ink);animation:drop 1.8s infinite;}
+  .scroll-hint{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:40;font-size:10px;
+    letter-spacing:3.5px;text-transform:uppercase;color:var(--gold-soft);display:flex;flex-direction:column;align-items:center;gap:9px;opacity:.7;transition:opacity .4s;}
+  .scroll-hint .bar{width:1px;height:36px;background:linear-gradient(to bottom,var(--gold),rgba(200,165,90,0));animation:drop 1.9s infinite;}
   @keyframes drop{0%{transform:scaleY(0);transform-origin:top;}45%{transform:scaleY(1);transform-origin:top;}55%{transform:scaleY(1);transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
-  .corner-ar{position:fixed;bottom:24px;right:30px;z-index:40;font-size:11px;letter-spacing:2px;border:1px solid #fff;
-    padding:4px 10px;border-radius:20px;mix-blend-mode:difference;color:#fff;transition:opacity .4s;}
-  .touch-hint{position:fixed;bottom:74px;left:50%;transform:translateX(-50%);z-index:40;font-size:11px;
-    letter-spacing:2px;text-transform:uppercase;opacity:0;display:none;}
+  .corner-ar{position:fixed;bottom:26px;right:32px;z-index:40;font-size:10px;letter-spacing:2.5px;border:1px solid rgba(200,165,90,.42);
+    padding:5px 12px;border-radius:20px;color:var(--gold-soft);transition:opacity .4s;}
+  .touch-hint{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);z-index:40;font-size:10px;color:var(--gold-soft);
+    letter-spacing:2.5px;text-transform:uppercase;opacity:0;display:none;}
   @media(hover:none){.touch-hint{display:block;animation:fade 4.5s ease forwards;animation-delay:1.4s;}}
   @keyframes fade{0%{opacity:0;}16%{opacity:.9;}82%{opacity:.9;}100%{opacity:0;}}
 
-  .mastery{position:relative;min-height:104svh;width:100%;background:var(--ink);color:var(--cream);
-    display:flex;flex-direction:column;justify-content:center;padding:12vh 7vw;z-index:10;overflow:hidden;}
-  .mastery .eyebrow{font-size:12px;letter-spacing:4px;text-transform:uppercase;opacity:.55;margin-bottom:5vh;}
-  .mastery h2{font-family:"Bodoni Moda",serif;font-weight:900;font-size:clamp(50px,10vw,176px);line-height:.88;letter-spacing:-0.04em;text-transform:uppercase;margin-bottom:7vh;}
-  .mastery h2 em{color:var(--orange);font-style:italic;}
-  .mastery .masub{font-family:"DM Mono",monospace;font-size:13px;letter-spacing:1px;opacity:.72;margin:-3vh 0 6vh;max-width:600px;line-height:1.65;}
-  .mastery .masub b{color:var(--orange);font-weight:500;}
-  .creds{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;border-top:1px solid rgba(247,233,214,.22);}
-  .cred{padding:34px 26px 34px 0;border-bottom:1px solid rgba(247,233,214,.16);}
-  .cred .n{font-family:"Bodoni Moda",serif;font-size:50px;font-weight:700;color:var(--orange);line-height:1;margin-bottom:12px;}
-  .cred .t{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.82;line-height:1.5;}
+  .mastery{position:relative;min-height:104svh;width:100%;background:var(--bg);color:var(--cream);
+    display:flex;flex-direction:column;justify-content:center;padding:13vh 7vw;z-index:10;overflow:hidden;
+    background-image:radial-gradient(70% 55% at 22% 28%, rgba(120,72,30,.16) 0%, rgba(13,8,6,0) 60%);}
+  .mastery .eyebrow{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--gold);opacity:.85;margin-bottom:5.5vh;}
+  .mastery h2{font-family:"Bodoni Moda",serif;font-weight:900;font-size:clamp(50px,10vw,178px);line-height:.86;letter-spacing:-0.028em;text-transform:uppercase;margin-bottom:7vh;}
+  .mastery h2 em{color:var(--gold-bright);font-style:italic;}
+  .mastery .masub{font-family:"DM Mono",monospace;font-size:13px;letter-spacing:1px;opacity:.74;margin:-3vh 0 6.5vh;max-width:600px;line-height:1.7;}
+  .mastery .masub b{color:var(--gold-bright);font-weight:500;}
+  .creds{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;border-top:1px solid rgba(200,165,90,.26);}
+  .cred{padding:36px 28px 36px 0;border-bottom:1px solid rgba(200,165,90,.16);}
+  .cred .n{font-family:"Bodoni Moda",serif;font-size:52px;font-weight:700;color:var(--gold);line-height:1;margin-bottom:14px;}
+  .cred .t{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.78;line-height:1.6;}
 
-  .rsvp{position:relative;min-height:100svh;width:100%;background:var(--orange);color:var(--ink);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:9vh 6vw;z-index:10;gap:40px;overflow:hidden;}
-  .rsvp .kicker{font-size:12px;letter-spacing:4px;text-transform:uppercase;opacity:.7;}
-  .rsvp h3{font-family:"Bodoni Moda",serif;font-weight:900;font-style:italic;font-size:clamp(44px,9vw,148px);line-height:.84;letter-spacing:-0.04em;text-transform:uppercase;}
-  .btn{position:relative;display:inline-flex;align-items:center;gap:16px;background:var(--ink);color:var(--cream);
-    padding:27px 48px;border-radius:60px;font-size:15px;letter-spacing:2px;text-transform:uppercase;font-weight:500;overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1);}
-  .btn:hover{transform:scale(1.06);}
-  .btn .dot{width:9px;height:9px;border-radius:50%;background:var(--orange);animation:pulse 1.4s infinite;}
+  .rsvp{position:relative;min-height:100svh;width:100%;background:var(--bg);color:var(--cream);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:9vh 6vw;z-index:10;gap:44px;overflow:hidden;
+    background-image:radial-gradient(60% 50% at 50% 44%, rgba(150,92,38,.20) 0%, rgba(13,8,6,0) 64%);}
+  .rsvp .kicker{font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--gold);opacity:.9;}
+  .rsvp h3{font-family:"Bodoni Moda",serif;font-weight:900;font-style:italic;font-size:clamp(44px,9vw,150px);line-height:.86;letter-spacing:-0.028em;text-transform:uppercase;color:var(--champagne);}
+  .btn{position:relative;display:inline-flex;align-items:center;gap:16px;background:transparent;color:var(--gold-bright);
+    border:1px solid var(--gold);padding:25px 50px;border-radius:60px;font-size:13px;letter-spacing:3px;text-transform:uppercase;font-weight:500;overflow:hidden;
+    transition:transform .5s cubic-bezier(.2,.8,.2,1),background .5s ease,color .5s ease,box-shadow .5s ease;
+    box-shadow:0 0 0 0 rgba(200,165,90,0);}
+  .btn:hover{transform:scale(1.04);background:var(--gold);color:var(--bg);box-shadow:0 14px 50px -12px rgba(200,165,90,.5);}
+  .btn .dot{width:8px;height:8px;border-radius:50%;background:var(--gold-bright);animation:pulse 1.6s infinite;}
+  .btn:hover .dot{background:var(--bg);}
   @keyframes pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.7);opacity:.5;}}
-  .rsvp .spots{font-size:12px;letter-spacing:3px;text-transform:uppercase;opacity:.65;}
-  .footer{position:absolute;bottom:22px;left:0;width:100%;display:flex;justify-content:space-between;padding:0 30px;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.55;}
+  .rsvp .spots{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold-soft);opacity:.7;}
+  .footer{position:absolute;bottom:24px;left:0;width:100%;display:flex;justify-content:space-between;padding:0 34px;font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold-soft);opacity:.5;}
 
   .reveal{opacity:0;transform:translateY(44px);transition:opacity 1s ease,transform 1s cubic-bezier(.2,.8,.2,1);}
   .reveal.in{opacity:1;transform:none;}
 
-  #load{position:fixed;inset:0;background:var(--orange);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .9s ease;}
+  #load{position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .9s ease;
+    background-image:radial-gradient(60% 50% at 50% 46%, rgba(150,92,38,.16) 0%, rgba(13,8,6,0) 66%);}
   #load.hide{opacity:0;pointer-events:none;}
-  #load .word{font-family:"Bodoni Moda",serif;font-style:italic;font-weight:900;font-size:clamp(40px,9vw,90px);color:var(--ink);letter-spacing:-0.03em;}
-  #load .ctr{font-size:13px;letter-spacing:3px;}
-  #load .line{width:42vw;max-width:380px;height:1px;background:rgba(22,10,5,.25);position:relative;overflow:hidden;}
-  #load .line i{position:absolute;left:0;top:0;height:100%;width:0;background:var(--ink);}
+  #load .word{font-family:"Bodoni Moda",serif;font-style:italic;font-weight:900;font-size:clamp(40px,9vw,90px);color:var(--champagne);letter-spacing:-0.02em;text-shadow:0 0 60px rgba(214,168,90,.28);}
+  #load .ctr{font-size:12px;letter-spacing:4px;color:var(--gold-soft);}
+  #load .line{width:42vw;max-width:380px;height:1px;background:rgba(200,165,90,.22);position:relative;overflow:hidden;}
+  #load .line i{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(to right,var(--gold),var(--gold-bright));}
 </style>
 </head>
 <body>
@@ -204,11 +225,11 @@
   renderer.setPixelRatio(Math.min(devicePixelRatio,Q.dpr));
   renderer.setSize(W,H);
   // warm clear (alpha 0): keeps the canvas transparent so the DOM headline shows through the gaps,
-  // while giving the glass a warm amber tone to refract instead of black.
-  renderer.setClearColor(new THREE.Color(0xc6792f),0);
+  // while giving the crystal a warm cognac tone to refract through (instead of black).
+  renderer.setClearColor(new THREE.Color(0xb06a26),0);
   renderer.shadowMap.enabled=false;                 // glass is ethereal; grounding handled by a soft contact-shadow sprite
   renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.02;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
   sceneEl.appendChild(renderer.domElement);
 
   const scene=new THREE.Scene();
@@ -218,11 +239,11 @@
     const aspect=W/H, tanV=Math.tan((34*Math.PI/180)/2);
     let z;
     if(aspect<1){                                  // portrait: pizza must fit across the narrow width
-      z=(RADIUS_HINT+0.62)/(tanV*aspect);
-      z=Math.min(Math.max(z,12.8),22.5);
-    }else{                                          // landscape / desktop: fit the tilted height + bloom spread
-      z=(RADIUS_HINT*1.02)/tanV;
-      z=Math.min(Math.max(z,11.6),13.6);
+      z=(RADIUS_HINT+0.74)/(tanV*aspect);          // a touch more breathing room (negative space = luxury)
+      z=Math.min(Math.max(z,13.0),23.2);
+    }else{                                          // landscape / desktop: fit the tilted height + open bloom spread
+      z=(RADIUS_HINT*1.07)/tanV;
+      z=Math.min(Math.max(z,12.0),14.2);
     }
     const portrait=aspect<1;
     camBase.set(0, portrait?5.3:4.9, z);
@@ -233,12 +254,13 @@
   placeCam();
 
   // ---- lighting: HDRI environment carries reflections; a few shaping lights on top ----
-  scene.add(new THREE.AmbientLight(0xffe9d6,0.30));
+  scene.add(new THREE.AmbientLight(0xffe9d6,0.18));   // low ambient -> pizza sits in a pool of light on deep espresso
   const key=new THREE.DirectionalLight(0xfff1dc,1.55);key.position.set(5.0,12.5,6.8);scene.add(key);
-  const fill=new THREE.DirectionalLight(0xffe2c0,0.55);fill.position.set(-6,4.5,4.5);scene.add(fill);
-  const rim=new THREE.DirectionalLight(0xff8a42,0.55);rim.position.set(-4,4.5,-7);scene.add(rim);
-  const warm=new THREE.PointLight(0xffc488,0.30,40);warm.position.set(3,3.2,5);scene.add(warm);
-  const spec=new THREE.PointLight(0xfff4e2,0.55,22);spec.position.set(1.2,5.2,3.6);scene.add(spec);
+  const fill=new THREE.DirectionalLight(0xffe2c0,0.42);fill.position.set(-6,4.5,4.5);scene.add(fill);
+  const rim=new THREE.DirectionalLight(0xffca6a,0.85);rim.position.set(-4,5.0,-7);scene.add(rim);   // gold back-rim -> precious edge glow
+  const goldBack=new THREE.SpotLight(0xffb851,0.55,40,0.9,0.6);goldBack.position.set(2.5,-3,-6);scene.add(goldBack);  // faint up-light catches cut faces
+  const warm=new THREE.PointLight(0xffc488,0.26,40);warm.position.set(3,3.2,5);scene.add(warm);
+  const spec=new THREE.PointLight(0xfff6e8,0.70,22);spec.position.set(1.2,5.2,3.6);scene.add(spec);   // crisp jewel highlight
 
   // procedural fallback environment (used until / unless the HDRI loads)
   (function setupEnvFallback(){
@@ -281,7 +303,9 @@
   const SECT=TAU/SLICES;
   const THICK=0.50;                                   // matches D1+D2+D3 of the original so the camera framing holds
   const CR=(2*RADIUS*Math.sin(SECT/2))/(3*(SECT/2));  // sector centroid radius -> pivot the bloom tilt about each wedge's middle
-  const OUT=0.92, UP=0.74;                            // bloom travel: scatter outward + float upward (kept in-frame, premium-restrained)
+  const OUT=0.99, UP=0.81;                            // bloom travel: scatter outward + float upward (open but kept in-frame, refined)
+  const YAXIS=new THREE.Vector3(0,1,0);
+  const _qTilt=new THREE.Quaternion(), _qSpin=new THREE.Quaternion();  // reused per-frame (no GC churn)
 
   // deterministic gentle surface relief -> adjacent wedges line up perfectly when whole
   function reliefY(x,z){const rad=Math.hypot(x,z);const f=Math.min(1,rad/RADIUS);
@@ -295,38 +319,45 @@
   // Mobile/LOW: lighter translucent reflective amber (NO transmission) -> env reflection + clearcoat carry the glass read.
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xffc488, metalness:0.0, roughness:0.05,
-        transmission:0.92, ior:1.45, thickness:1.5,
-        attenuationColor:new THREE.Color(0xff9a4d), attenuationDistance:2.4,
-        clearcoat:1.0, clearcoatRoughness:0.08,
-        iridescence:0.18, iridescenceIOR:1.3,
-        envMapIntensity:1.55, emissive:0x2c1606, emissiveIntensity:0.07 })
+        color:0xf2cf94, metalness:0.0, roughness:0.035,        // clearer, hand-cut cognac crystal
+        transmission:0.97, ior:1.5, thickness:1.7,
+        attenuationColor:new THREE.Color(0xb5651d), attenuationDistance:1.9,  // cognac internal absorption
+        clearcoat:1.0, clearcoatRoughness:0.035,
+        iridescence:0.34, iridescenceIOR:1.32, iridescenceThicknessRange:[120,440], // precious refractive sparkle
+        specularIntensity:1.0, specularColor:new THREE.Color(0xffe9c4),
+        envMapIntensity:2.0, emissive:0x2e1808, emissiveIntensity:0.065 })
     : new THREE.MeshPhysicalMaterial({
-        color:0xffc488, metalness:0.0, roughness:0.12,
-        transmission:0.0, ior:1.4, transparent:true, opacity:0.6,
-        clearcoat:1.0, clearcoatRoughness:0.12, reflectivity:0.55,
-        envMapIntensity:1.7, emissive:0x3a1d08, emissiveIntensity:0.14 });
+        color:0xf0c98a, metalness:0.0, roughness:0.10,
+        transmission:0.0, ior:1.45, transparent:true, opacity:0.58,
+        clearcoat:1.0, clearcoatRoughness:0.09, reflectivity:0.6,
+        envMapIntensity:1.9, emissive:0x32190a, emissiveIntensity:0.13 });
 
   // frosted / etched glass cornicione rim
   const cornMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xfff0dd, metalness:0.0, roughness:0.55,
-        transmission:0.4, ior:1.4, thickness:0.5,
-        clearcoat:0.5, clearcoatRoughness:0.35,
-        envMapIntensity:1.0, emissive:0x140a04, emissiveIntensity:0.06 })
+        color:0xf6e6c6, metalness:0.0, roughness:0.5,         // frosted, etched amber-crystal edge
+        transmission:0.44, ior:1.45, thickness:0.55,
+        clearcoat:0.6, clearcoatRoughness:0.3,
+        iridescence:0.16, iridescenceIOR:1.3,
+        envMapIntensity:1.15, emissive:0x1a0d04, emissiveIntensity:0.05 })
     : new THREE.MeshPhysicalMaterial({
-        color:0xfff0dd, metalness:0.0, roughness:0.5, transparent:true, opacity:0.82,
-        clearcoat:0.5, clearcoatRoughness:0.35,
-        envMapIntensity:1.1, emissive:0x1c0e05, emissiveIntensity:0.10 });
+        color:0xf6e6c6, metalness:0.0, roughness:0.46, transparent:true, opacity:0.8,
+        clearcoat:0.6, clearcoatRoughness:0.3,
+        envMapIntensity:1.2, emissive:0x22120a, emissiveIntensity:0.09 });
 
-  // ghost toppings: OPAQUE milky inclusions so the transmissive glass refracts/frosts them (suspended inside).
-  const ghostMat=new THREE.MeshStandardMaterial({color:0xfff1e2, roughness:0.62, metalness:0.0, envMapIntensity:0.5, emissive:0x180d04, emissiveIntensity:0.06});
-  const discGeo=new THREE.CylinderGeometry(1,1,1,LOW?16:26);
-  const pearlGeo=new THREE.SphereGeometry(1,LOW?8:12,LOW?6:9);
+  // refined toppings: OPAQUE inclusions so the transmissive crystal refracts/frosts them (suspended inside).
+  // frosted amber pepperoni discs (each ringed with a fine gold wire) + a few delicate champagne mozzarella pearls.
+  const pepMat=new THREE.MeshStandardMaterial({color:0xbe7d2e, roughness:0.5, metalness:0.0, envMapIntensity:0.7, emissive:0x3a1c06, emissiveIntensity:0.10});
+  const pearlMat=new THREE.MeshStandardMaterial({color:0xf6ead2, roughness:0.3, metalness:0.0, envMapIntensity:0.95, emissive:0x1c0e05, emissiveIntensity:0.06});
+  const goldRimMat=new THREE.MeshStandardMaterial({color:0xd9b25a, metalness:0.95, roughness:0.26, envMapIntensity:1.5, emissive:0x241804, emissiveIntensity:0.08});
+  const discGeo=new THREE.CylinderGeometry(1,1,1,LOW?20:30);
+  const pearlGeo=new THREE.SphereGeometry(1,LOW?10:16,LOW?8:12);
+  const ringGeo=new THREE.TorusGeometry(1,0.055,LOW?6:9,LOW?20:32);   // unit gold-wire ring, scaled to each disc
 
   // Fresnel rim shell (additive) — gives the premium glass edge-glow and feeds the post bloom; intensifies as it blooms.
   const fresnelMat=new THREE.ShaderMaterial({
-    uniforms:{ uColor:{value:new THREE.Color(0xffb56b)}, uPower:{value:2.5}, uIntensity:{value:0.4} },
+    uniforms:{ uColor:{value:new THREE.Color(0xe2bd6a)}, uColor2:{value:new THREE.Color(0xfff0d8)},
+               uPower:{value:2.7}, uIntensity:{value:0.34} },
     vertexShader:[
       'varying vec3 vWN; varying vec3 vWP;',
       'void main(){',
@@ -337,11 +368,16 @@
       '}'].join('\n'),
     fragmentShader:[
       'varying vec3 vWN; varying vec3 vWP;',
-      'uniform vec3 uColor; uniform float uPower; uniform float uIntensity;',
+      'uniform vec3 uColor; uniform vec3 uColor2; uniform float uPower; uniform float uIntensity;',
       'void main(){',
       '  vec3 V = normalize(cameraPosition - vWP);',
-      '  float f = pow(1.0 - clamp(dot(normalize(vWN), V), 0.0, 1.0), uPower);',
-      '  gl_FragColor = vec4(uColor * f * uIntensity, f * uIntensity);',
+      '  float ndv = clamp(dot(normalize(vWN), V), 0.0, 1.0);',
+      '  float f = pow(1.0 - ndv, uPower);',
+      '  float band = pow(1.0 - ndv, uPower*2.2);',          // grazing-edge thin-film band
+      '  vec3 disp = vec3(0.5+0.5*sin(band*9.0), 0.5+0.5*sin(band*9.0+2.1), 0.5+0.5*sin(band*9.0+4.2));',
+      '  vec3 col = mix(uColor, uColor2, band);',
+      '  col = mix(col, col*disp*1.7, 0.20);',                // subtle precious dispersion at the silhouette
+      '  gl_FragColor = vec4(col * f * uIntensity, f * uIntensity);',
       '}'].join('\n'),
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.FrontSide });
 
@@ -362,22 +398,28 @@
 
   function buildGhosts(i,a0,a1){
     const out=[];
-    // 2 ghost pepperoni discs (faint, frosted) embedded just under the glass surface
-    const discs=[{fa:0.34,fr:0.46,pr:0.24},{fa:0.66,fr:0.70,pr:0.205}];
+    // 2 frosted amber pepperoni discs (suspended just under the surface), each ringed with a fine gold wire
+    const discs=[{fa:0.36,fr:0.47,pr:0.235},{fa:0.66,fr:0.70,pr:0.20}];
     for(const sp of discs){
       const a=a0+(a1-a0)*sp.fa, r=RADIUS*sp.fr, x=Math.cos(a)*r, z=-Math.sin(a)*r;
-      const m=new THREE.Mesh(discGeo,ghostMat);
-      const pr=sp.pr*(0.85+Math.random()*0.3);
-      m.position.set(x, THICK-0.07+reliefY(x,z)*0.5, z);
-      m.scale.set(pr,0.085,pr);m.userData.si=i;out.push(m);
+      const pr=sp.pr*(0.88+Math.random()*0.22);
+      const y=THICK-0.07+reliefY(x,z)*0.5;
+      const m=new THREE.Mesh(discGeo,pepMat);
+      m.position.set(x, y, z);
+      m.scale.set(pr,0.065,pr);m.userData.si=i;out.push(m);
+      const ring=new THREE.Mesh(ringGeo,goldRimMat);   // faint gold rim around the disc
+      ring.position.set(x, y+0.034, z);
+      ring.rotation.x=Math.PI/2;                        // lay the ring flat in the XZ plane
+      ring.scale.setScalar(pr);
+      ring.userData.si=i;out.push(ring);
     }
-    // a couple of tiny milky mozzarella "pearls" as elegant cheese hints
-    for(let p=0;p<2;p++){
-      const a=a0+(a1-a0)*(0.24+Math.random()*0.52), r=RADIUS*(0.30+Math.random()*0.46), x=Math.cos(a)*r, z=-Math.sin(a)*r;
-      const m=new THREE.Mesh(pearlGeo,ghostMat);
-      const pr=0.06+Math.random()*0.045;
-      m.position.set(x, THICK-0.05+reliefY(x,z)*0.5, z);
-      m.scale.set(pr,pr*0.6,pr);m.userData.si=i;out.push(m);
+    // one delicate champagne mozzarella "pearl" as an elegant cheese hint (less is more)
+    {
+      const a=a0+(a1-a0)*(0.30+Math.random()*0.42), r=RADIUS*(0.34+Math.random()*0.40), x=Math.cos(a)*r, z=-Math.sin(a)*r;
+      const m=new THREE.Mesh(pearlGeo,pearlMat);
+      const pr=0.052+Math.random()*0.032;
+      m.position.set(x, THICK-0.04+reliefY(x,z)*0.5, z);
+      m.scale.set(pr,pr*0.72,pr);m.userData.si=i;out.push(m);
     }
     return out;}
 
@@ -408,13 +450,14 @@
     g.userData={i,a0,a1,mid,dir,
       cen:new THREE.Vector3(Math.cos(mid)*CR,THICK*0.5,-Math.sin(mid)*CR),
       lift:0,
-      bp:{ stagger:(i%4)*0.05+Math.random()*0.05,    // depth-staggered cascade on bloom + reassemble
-           outV:OUT*(0.82+Math.random()*0.40),
-           upV:UP*(0.62+Math.random()*0.80),
-           tilt:0.40+Math.random()*0.50,             // roll about its own radial axis -> opens gaps, shows glass cut faces
-           wob:0.04+Math.random()*0.05,
-           ws:0.5+Math.random()*0.7,
+      bp:{ stagger:(i%4)*0.06+Math.random()*0.05,    // depth-staggered cascade on bloom + reassemble
+           outV:OUT*(0.84+Math.random()*0.34),
+           upV:UP*(0.66+Math.random()*0.74),
+           tilt:0.55+Math.random()*0.55,             // roll about its own radial axis -> opens gaps, shows glass cut faces
+           wob:0.03+Math.random()*0.04,
+           ws:0.4+Math.random()*0.5,                 // slow, calm wobble
            ph:Math.random()*TAU,
+           spin:(Math.random()<0.5?-1:1)*(0.18+Math.random()*0.22), // gentle in-place turn while floating
            axis:dir.clone() }};
     return g;
   }
@@ -484,7 +527,7 @@
       fsScene=new THREE.Scene();fsCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
       quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),null);quad.frustumCulled=false;fsScene.add(quad);
       const vert='varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}';
-      brightMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},threshold:{value:0.82}},vertexShader:vert,
+      brightMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},threshold:{value:0.78}},vertexShader:vert,
         fragmentShader:'uniform sampler2D tDiffuse;uniform float threshold;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(0.299,0.587,0.114));float f=smoothstep(threshold,threshold+0.18,l);gl_FragColor=vec4(c.rgb*f,c.a*f);}'});
       blurMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},dir:{value:new THREE.Vector2()},res:{value:new THREE.Vector2(hw,hh)}},vertexShader:vert,
         fragmentShader:'uniform sampler2D tDiffuse;uniform vec2 dir;uniform vec2 res;varying vec2 vUv;void main(){vec2 px=dir/res;vec4 s=texture2D(tDiffuse,vUv)*0.227027;s+=texture2D(tDiffuse,vUv+px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv-px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv+px*3.2308)*0.070270;s+=texture2D(tDiffuse,vUv-px*3.2308)*0.070270;gl_FragColor=s;}'});
@@ -511,12 +554,13 @@
           '  col+=bl.rgb*bloom;',
           '  float L=dot(col,vec3(0.299,0.587,0.114));',
           '  float sat=length(col-vec3(L));',
-          '  col=mix(vec3(L),col, 1.0-0.18*smoothstep(0.24,0.58,sat));',
-          '  col*=vec3(1.04,1.005,0.96);',
+          '  col=mix(vec3(L),col, 1.0-0.14*smoothstep(0.24,0.58,sat));',   // soften only the loudest highlights (keep gold rich)',
+          '  col+=vec3(0.012,0.006,0.0)*(1.0-clamp(L,0.0,1.0));',          // warm lift in the shadows -> rich, not muddy',
+          '  col*=vec3(1.06,1.004,0.93);',                                 // warm cinematic / gold grade',
           '  col=clamp(col,0.0,4.0);',
-          '  col=pow(col, vec3(0.975,0.99,1.04));',
-          '  float vig=smoothstep(1.02,0.30,length(d));',
-          '  col*=mix(0.74,1.0,vig);',
+          '  col=pow(col, vec3(0.97,0.99,1.05));',
+          '  float vig=smoothstep(1.05,0.28,length(d));',
+          '  col*=mix(0.70,1.0,vig);',                                     // deeper museum-pool vignette on the crystal',
           '  float a=clamp(sc.a+bl.a*bloom,0.0,1.0);',
           '  gl_FragColor=vec4(col,a);',
           '}'].join('\n')});
@@ -573,10 +617,10 @@
     camera.position.z=lerp(camera.position.z, camBase.z+Math.cos(t*0.10)*0.42, 0.06);
     camera.lookAt(camLook);
 
-    pizza.rotation.y+=dt*0.08*(bloom>0.15?0.3:1);
-    pizzaWrap.rotation.y=lerp(pizzaWrap.rotation.y,pYaw,0.05);
-    pizzaWrap.rotation.x=lerp(pizzaWrap.rotation.x,pPit,0.05);
-    const bob=Math.sin(t*0.8)*0.08;pizza.position.y=0.14+bob;
+    pizza.rotation.y+=dt*0.055*(bloom>0.15?0.25:1);     // slow, premium idle turntable
+    pizzaWrap.rotation.y=lerp(pizzaWrap.rotation.y, pYaw+Math.sin(t*0.13)*0.035, 0.05);  // alive-at-rest parallax drift
+    pizzaWrap.rotation.x=lerp(pizzaWrap.rotation.x, pPit+Math.sin(t*0.10)*0.018, 0.05);
+    const bob=Math.sin(t*0.6)*0.07;pizza.position.y=0.14+bob;   // gentle breathing float
     shadow.material.opacity=Math.max(0.12,0.5-bob*0.3-bloom*0.15);shadow.scale.setScalar(1.0+bob*0.14+bloom*0.10);
 
     const s=scrollP;
@@ -597,8 +641,8 @@
     cutter.classList.toggle('show', (hovered>=0) && !isTouch);
     cutlabel.classList.toggle('show', (hovered>=0) && !isTouch);
 
-    // global bloom: buttery critically-damped spring (frame-rate independent)
-    { const omega=6.0, expf=Math.exp(-omega*dt);
+    // global bloom: slow, buttery critically-damped spring (frame-rate independent) — elegant, no bounce
+    { const omega=4.4, expf=Math.exp(-omega*dt);
       const delta=bloom-bloomTarget, temp=(bloomVel+omega*delta)*dt;
       bloom=bloomTarget+(delta+temp)*expf;
       bloomVel=(bloomVel-omega*temp)*expf;
@@ -607,14 +651,18 @@
     if(bloomActive&&!prevBloomActive)playChime();
     prevBloomActive=bloomActive;
 
-    // per-wedge bloom transform (depth-staggered scatter + gentle roll/wobble; identity at rest = seamless whole)
+    // per-wedge bloom transform (depth-staggered scatter + slow roll/turn; identity at rest = seamless whole)
     slices.forEach(g=>{
       const bp=g.userData.bp;
-      let v=bloom*(1+bp.stagger)-bp.stagger; v=v<0?0:(v>1?1:v); v=v*v*(3-2*v);
+      let v=bloom*(1+bp.stagger)-bp.stagger; v=v<0?0:(v>1?1:v);
+      v=v*v*v*(v*(v*6.0-15.0)+10.0);                 // smootherstep -> graceful, no jerk
       g.userData.lift=v;
       const wob=Math.sin(t*bp.ws+bp.ph)*bp.wob*v;
-      const ang=v*bp.tilt+wob;
-      g.quaternion.setFromAxisAngle(bp.axis,ang);
+      const ang=v*bp.tilt+wob;                        // open about the radial axis (shows the cut crystal faces)
+      const spinAng=bp.spin*v+Math.sin(t*0.16+bp.ph)*0.10*v;  // slow in-place turn while floating (bounded, unwinds to 0)
+      _qTilt.setFromAxisAngle(bp.axis,ang);
+      _qSpin.setFromAxisAngle(YAXIS,spinAng);
+      g.quaternion.copy(_qSpin).multiply(_qTilt);
       const ox=g.userData.dir.x*v*bp.outV;
       const oz=g.userData.dir.z*v*bp.outV;
       const oy=v*bp.upV+Math.sin(t*0.7+bp.ph)*0.03*v;
@@ -622,9 +670,9 @@
       g.position.set(ox+C.x-Cr.x, oy+C.y-Cr.y, oz+C.z-Cr.z);   // pivot the roll about the wedge centroid, then travel
     });
 
-    // hover-driven glow: bloom intensity + fresnel rim rise as the pizza opens
-    if(compMat)compMat.uniforms.bloom.value=0.24+bloom*0.30;
-    fresnelMat.uniforms.uIntensity.value=0.30+bloom*0.95;
+    // hover-driven glow: jewel bloom intensity + gold fresnel rim rise as the crystal opens
+    if(compMat)compMat.uniforms.bloom.value=0.22+bloom*0.34;
+    fresnelMat.uniforms.uIntensity.value=0.30+bloom*0.85;
 
     if(PP){try{renderPP();}catch(e){PP=false;renderer.setRenderTarget(null);renderer.render(scene,camera);}}
     else{renderer.setRenderTarget(null);renderer.render(scene,camera);}
