@@ -486,7 +486,7 @@
       cheeseMat.aoMap=aoTex;cheeseMat.aoMapIntensity=1.0;
       // REAL relief: drive vertex displacement on the tessellated cap from the same height field (R7: subtle, realistic)
       const heightTex=new THREE.CanvasTexture(hc);heightTex.anisotropy=2;
-      cheeseMat.displacementMap=heightTex;cheeseMat.displacementScale=0.092;cheeseMat.displacementBias=-0.026;
+      cheeseMat.displacementMap=heightTex;cheeseMat.displacementScale=0.104;cheeseMat.displacementBias=-0.030;
       cheeseMat.needsUpdate=true; photoReady=true;
 
       // ---- detect pepperoni discs from the photo → real raised meshes parented to each wedge ----
@@ -528,7 +528,7 @@
 
   // contact shadow
   function shadowTex(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
-    const g=x.createRadialGradient(128,128,8,128,128,128);g.addColorStop(0,'rgba(26,7,2,0.6)');g.addColorStop(0.5,'rgba(26,7,2,0.24)');g.addColorStop(1,'rgba(26,7,2,0)');
+    const g=x.createRadialGradient(128,128,8,128,128,124);g.addColorStop(0,'rgba(18,5,1,0.82)');g.addColorStop(0.42,'rgba(18,5,1,0.34)');g.addColorStop(1,'rgba(18,5,1,0)');  // darker, tighter core -> pizza sits grounded (more real)
     x.fillStyle=g;x.fillRect(0,0,256,256);return new THREE.CanvasTexture(c);}
   const shadow=new THREE.Mesh(new THREE.PlaneGeometry(9.0,9.0),new THREE.MeshBasicMaterial({map:shadowTex(),transparent:true,depthWrite:false,opacity:0.92}));
   shadow.rotation.x=-Math.PI/2;shadow.position.y=-1.62;
@@ -725,7 +725,7 @@
             A.y+(B.y-A.y)*tt-env*sag,
             A.z+(B.z-A.z)*tt+tang.z*cz));}
         const globalThin=Math.max(0.36,1-L*0.10);                  // stay thick much longer
-        const baseR=(s.wisp?0.034:0.136)*s.thick*globalThin*Math.sqrt(snap); // thicker, fuller, gooier strands
+        const baseR=(s.wisp?0.036:0.152)*s.thick*globalThin*Math.sqrt(snap); // thicker, fuller, gooier strands
         const rfn=tt=>{const ends=0.56+0.44*Math.abs(2*tt-1);const neck=1-0.44*Math.sin(Math.PI*tt)*stretch;return Math.max(0.009,baseR*ends*neck);};
         const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,PTS-1,s.wisp?Math.min(6,Q.strRad):Q.strRad);if(old)old.dispose();
         s.mat.opacity=0.97*fade*snap; s.mesh.visible=true;
