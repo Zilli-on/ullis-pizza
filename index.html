@@ -437,7 +437,11 @@
   const cornNrm=heightToNormal(breadHeight(),3.4);cornNrm.wrapS=cornNrm.wrapT=THREE.RepeatWrapping;cornNrm.repeat.set(3,2);
   const cornAlb=breadAlbedo();cornAlb.repeat.set(3,2);
   const cornMat=new THREE.MeshStandardMaterial({map:cornAlb,color:0xffffff,roughness:0.84,normalMap:cornNrm,normalScale:new THREE.Vector2(1.6,1.6),envMapIntensity:0.55});  // stronger relief -> premium blistered crust, not flat
-  texLoader.load('assets/crust_color.jpg', function(t){t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.MirroredRepeatWrapping;t.repeat.set(4,2);t.anisotropy=8;cornMat.map=t;cornMat.color.setHex(0xffffff);cornMat.needsUpdate=true;}, undefined, function(){});
+  // REAL-bread textures (high-res, generated): crust surface + airy dough crumb, each with a matching normal map. (Replaces the old blurry crust_color.jpg + the dot-procedural crumb.)
+  texLoader.load('assets/crust_surf.jpg?v=1', function(t){t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,2);t.anisotropy=8;cornMat.map=t;cornMat.color.setHex(0xffffff);cornMat.needsUpdate=true;}, undefined, function(){});
+  texLoader.load('assets/crust_surf_n.jpg?v=1', function(t){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,2);t.anisotropy=4;cornMat.normalMap=t;cornMat.normalScale.set(1.5,1.5);cornMat.needsUpdate=true;}, undefined, function(){});
+  texLoader.load('assets/dough_crumb.jpg?v=1', function(t){t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(2.2,1.8);t.anisotropy=8;crustMat.map=t;crustMat.color.setHex(0xffffff);crustMat.needsUpdate=true;}, undefined, function(){});
+  texLoader.load('assets/dough_crumb_n.jpg?v=1', function(t){t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(2.2,1.8);t.anisotropy=4;crustMat.normalMap=t;crustMat.normalScale.set(1.25,1.25);crustMat.needsUpdate=true;}, undefined, function(){});
     // (dough cut-face now uses the procedural crumb texture above — no crust-exterior photo on the dough block)
   const charMat=new THREE.MeshStandardMaterial({map:crTex,roughness:0.82,color:0x7c4f25,envMapIntensity:0.45});
   const sauceMat=new THREE.MeshStandardMaterial({map:sauceTex,color:0xffffff,roughness:0.5,envMapIntensity:0.66});  // subtle tomato cross-section line
