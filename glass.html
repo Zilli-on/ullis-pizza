@@ -46,7 +46,7 @@
   #scene{position:fixed;inset:0;z-index:3;touch-action:pan-y;will-change:transform,opacity;}
 
   /* tasteful film grain over the whole orange world (KODE hallmark) */
-  #grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.10;mix-blend-mode:soft-light;
+  #grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.085;mix-blend-mode:soft-light;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     animation:grainmove 1.1s steps(3) infinite;}
   @keyframes grainmove{0%{transform:translate(0,0);}33%{transform:translate(-4%,2%);}66%{transform:translate(3%,-3%);}100%{transform:translate(0,0);}}
@@ -100,6 +100,14 @@
     .hero-type .l{font-size:clamp(54px,18vw,108px);}
     .hero-type .l:nth-child(2){margin-left:7vw;}
   }
+  /* DELIBERATE FIGURE / GROUND: a crisp cream PASSION on its own root-level layer that crosses
+     IN FRONT of the fixed crystal (z above the canvas), while PIZZA + PRECISION read darkly
+     THROUGH the glass behind. This clears the muddy semi-transparent overlap. The layer is
+     document-absolute (top:0), so it scrolls away with the hero and stays aligned with the
+     through-glass words. */
+  .hero-type.front{inset:auto;top:0;left:0;width:100%;height:100svh;z-index:4;}
+  .hero-type.front .l.mid{color:var(--cream);
+    text-shadow:0 0 54px rgba(255,236,212,.42), 0 2px 26px rgba(120,28,0,.30);}
   .sc{opacity:0;}
 
   .heroix{position:fixed;bottom:26px;left:34px;z-index:40;font-size:10px;letter-spacing:2.5px;
@@ -206,10 +214,17 @@
 <section class="hero">
   <div class="hero-type" id="herotype">
     <span class="l sc heroSc" data-text="PIZZA">PIZZA</span>
-    <span class="l mid sc heroSc" data-text="PASSION">PASSION</span>
+    <span class="l mid" style="visibility:hidden" aria-hidden="true">PASSION</span>
     <span class="l sc heroSc" data-text="PRECISION">PRECISION</span>
   </div>
 </section>
+
+<!-- crisp cream PASSION crossing IN FRONT of the crystal (root-level, above the canvas) -->
+<div class="hero-type front" id="herotypeFront">
+  <span class="l" style="visibility:hidden" aria-hidden="true">PIZZA</span>
+  <span class="l mid sc heroSc" data-text="PASSION">PASSION</span>
+  <span class="l" style="visibility:hidden" aria-hidden="true">PRECISION</span>
+</div>
 
 <div class="heroix mono" id="heroix">[ 001 ] PIZZA / PASSION / PRECISION</div>
 <div class="scroll-hint" id="scrollhint"><span>Scroll for more</span><div class="bar"></div></div>
@@ -280,7 +295,7 @@
   renderer.setClearColor(new THREE.Color(0xff7a33),0);
   renderer.shadowMap.enabled=false;                 // glass is ethereal; grounding handled by a soft contact-shadow sprite
   renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.14;
   sceneEl.appendChild(renderer.domElement);
 
   const scene=new THREE.Scene();
@@ -376,13 +391,13 @@
   // Mobile/LOW: lighter translucent reflective amber (NO transmission) -> env reflection + clearcoat carry the glass read.
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xffe2bc, metalness:0.0, roughness:0.038,        // clear, hand-cut crystal
-        transmission:0.97, ior:1.52, thickness:1.95,
-        attenuationColor:new THREE.Color(0xdf3d0a), attenuationDistance:2.45,  // warm orange internal absorption
-        clearcoat:1.0, clearcoatRoughness:0.035,
-        iridescence:0.36, iridescenceIOR:1.34, iridescenceThicknessRange:[100,460], // precious refractive sparkle
-        specularIntensity:1.0, specularColor:new THREE.Color(0xfff0d8),
-        envMapIntensity:2.1, emissive:0x3a1402, emissiveIntensity:0.05 })
+        color:0xfff1da, metalness:0.0, roughness:0.035,        // clean, warm hand-cut crystal
+        transmission:0.97, ior:1.5, thickness:1.35,            // thinner -> less internal darkening
+        attenuationColor:new THREE.Color(0xff7e34), attenuationDistance:3.6,  // warm orange refraction, longer distance = clearer (not grey)
+        clearcoat:1.0, clearcoatRoughness:0.04,
+        iridescence:0.20, iridescenceIOR:1.30, iridescenceThicknessRange:[120,420], // restrained sparkle (less cool/grey cast)
+        specularIntensity:1.0, specularColor:new THREE.Color(0xfff1dc),
+        envMapIntensity:2.35, emissive:0x5a2408, emissiveIntensity:0.10 })  // faint warm internal lift kills the murk
     : new THREE.MeshPhysicalMaterial({
         color:0xffcf9a, metalness:0.0, roughness:0.10,
         transmission:0.0, ior:1.45, transparent:true, opacity:0.60,
@@ -405,8 +420,8 @@
   // refined toppings: OPAQUE inclusions so the transmissive crystal refracts/frosts them (suspended inside).
   // Elegant frosted amber PEPPERONI DISCS — clear disc silhouette, matte (no glow), a faint gold wire rim.
   // No bright pearls/blobs: matte amber + low envMap + no emissive keep them OUT of the bloom threshold.
-  const pepMat=new THREE.MeshStandardMaterial({color:0xa8531a, roughness:0.68, metalness:0.0, envMapIntensity:0.34, emissive:0x200f03, emissiveIntensity:0.04});
-  const goldRimMat=new THREE.MeshStandardMaterial({color:0xc39949, metalness:0.5, roughness:0.46, envMapIntensity:0.55, emissive:0x000000, emissiveIntensity:0.0});  // faint, not glowing
+  const pepMat=new THREE.MeshStandardMaterial({color:0x9a2d12, roughness:0.5, metalness:0.0, envMapIntensity:0.42, emissive:0x2a0c04, emissiveIntensity:0.06});  // amber-red pepperoni, subtle sheen
+  const goldRimMat=new THREE.MeshStandardMaterial({color:0x701d0a, metalness:0.18, roughness:0.5, envMapIntensity:0.40, emissive:0x150602, emissiveIntensity:0.03});  // crisped deep-red pepperoni edge (restrained, not gold)
   const discGeo=new THREE.CylinderGeometry(1,1,1,LOW?20:30);
   const ringGeo=new THREE.TorusGeometry(1,0.038,LOW?6:8,LOW?22:34);   // fine unit gold-wire ring, scaled to each disc
 
@@ -541,7 +556,7 @@
     partsMat=new THREE.ShaderMaterial({
       transparent:true, depthWrite:false, depthTest:true, blending:THREE.NormalBlending,
       uniforms:{ uDiss:{value:0}, uTime:{value:0},
-                 uSize:{value:LOW?5.4:6.2}, uDpr:{value:Math.min(devicePixelRatio,Q.dpr)},
+                 uSize:{value:LOW?6.0:7.2}, uDpr:{value:Math.min(devicePixelRatio,Q.dpr)},
                  uCol:{value:new THREE.Color(0xff5a1f)}, uCol2:{value:new THREE.Color(0xffb267)} },
       vertexShader:[
         'attribute vec3 aRnd; attribute float aPh; attribute float aScl;',
@@ -551,12 +566,12 @@
         '  float d = clamp(uDiss,0.0,1.0);',
         '  float spread = d*d;',                              // ease-in burst
         '  vec3 p = position;',
-        '  p += aRnd * spread * 3.3;',
-        '  p.y += spread * 1.7;',
+        '  p += aRnd * spread * 3.6;',
+        '  p.y += spread * 1.8;',
         '  p.x += sin(uTime*0.8 + aPh)*0.13*d;',             // gentle turbulence so the cloud breathes
         '  p.z += cos(uTime*0.7 + aPh*1.3)*0.13*d;',
         '  p.y += sin(uTime*0.9 + aPh)*0.07*d;',
-        '  vA = smoothstep(0.02,0.16,d) * (1.0 - smoothstep(0.60,1.0,d));',  // appear, then vanish
+        '  vA = smoothstep(0.02,0.14,d) * (1.0 - smoothstep(0.68,1.0,d));',  // appear, linger, then vanish
         '  vM = aScl;',
         '  vec4 mv = modelViewMatrix * vec4(p,1.0);',
         '  gl_PointSize = uSize * aScl * uDpr * (1.0 + d*0.7) * (13.0 / max(0.001,-mv.z));',
@@ -777,7 +792,7 @@
     prevBloomActive=bloomActive;
 
     // SCROLL-DRIVEN DISSOLVE: scroll progressively blooms the pizza apart (combines with hover/hold)
-    const scrollOpen=Math.min(1,s/0.85);
+    const scrollOpen=Math.min(1,s/0.9);
     const opn=Math.min(1.18, bloom + scrollOpen*0.95);
 
     // per-wedge bloom transform (depth-staggered scatter + slow roll/turn; identity at rest = seamless whole)
@@ -812,8 +827,12 @@
     if(compMat)compMat.uniforms.bloom.value=0.22+bloom*0.34+scrollOpen*0.10;
     fresnelMat.uniforms.uIntensity.value=0.30+bloom*0.85+scrollOpen*0.30;
 
-    if(PP){try{renderPP();}catch(e){PP=false;renderer.setRenderTarget(null);renderer.render(scene,camera);}}
-    else{renderer.setRenderTarget(null);renderer.render(scene,camera);}
+    // skip the (now-invisible) canvas render once the hero has fully scrolled away -> keeps the
+    // content sections perfectly smooth; resumes instantly when scrolling back up or on hover.
+    if(s<0.99 || bloom>0.01){
+      if(PP){try{renderPP();}catch(e){PP=false;renderer.setRenderTarget(null);renderer.render(scene,camera);}}
+      else{renderer.setRenderTarget(null);renderer.render(scene,camera);}
+    }
   }
   const heroix=document.getElementById('heroix');
   animate();
@@ -861,7 +880,10 @@
       document.querySelectorAll('.sc').forEach(el=>{el.style.opacity='1';el.textContent=el.dataset.text;el.dataset.done='1';});
       return;
     }
-    document.querySelectorAll('.heroSc').forEach((el,i)=>{ setTimeout(()=>scramble(el), 120+i*150); });
+    // reveal top-to-bottom by on-screen position (PASSION now lives on the front layer)
+    const hs=[].slice.call(document.querySelectorAll('.heroSc'))
+      .sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top);
+    hs.forEach((el,i)=>{ setTimeout(()=>scramble(el), 120+i*150); });
   }
   if(DEMO||SHOT){revealType();}
   const li=setInterval(()=>{
