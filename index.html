@@ -822,6 +822,10 @@
           '  col*=vec3(1.05,1.005,0.95);',                      // amber warmth
           '  col=clamp(col,0.0,4.0);',
           '  col=pow(col, vec3(0.975,0.99,1.05));',             // golden push: lift warm mids, deepen blue',
+          '  col=(col-0.5)*1.07+0.5;',                          // gentle S-contrast -> more depth, richer & more appetizing pop',
+          '  vec3 Lr=vec3(dot(col,vec3(0.299,0.587,0.114)));',
+          '  col=mix(Lr,col,1.08);',                            // light vibrance -> juicier cheese/pepperoni (not neon)',
+          '  col=clamp(col,0.0,4.0);',
           '  float vig=smoothstep(1.02,0.30,length(d));',
           '  col*=mix(0.74,1.0,vig);',                          // tasteful vignette
           '  float a=clamp(sc.a+bl.a*bloom,0.0,1.0);',
@@ -909,11 +913,7 @@
     slices.forEach(g=>{
       let tgt=0;
       if(g.userData.i===grabbed){tgt=pull;activeSlice=g;}
-      else if(hovered>=0 && grabbed<0){
-        let d=Math.abs(g.userData.i-hovered); d=Math.min(d,SLICES-d);   // circular distance from the hovered wedge
-        tgt = d===0?0.62 : d===1?0.30 : d===2?0.14 : 0;                 // FAN: hovered wedge lifts most + gooey strands; neighbours ease less
-        if(d===0) activeSlice=g;                                        // hovered wedge shows cheese strands on hover (not just on drag)
-      }
+      else if(g.userData.i===hovered && grabbed<0){tgt=0.42;activeSlice=g;}  // single gooey pull on hover (one wedge eases out + cheese strands)
       // R7: buttery critically-damped spring — frame-rate independent, no jitter; glides out, eases back smoothly
       const omega=13.0, expf=Math.exp(-omega*dt);
       const delta=g.userData.lift-tgt, temp=(g.userData.vel+omega*delta)*dt;
