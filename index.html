@@ -196,8 +196,8 @@
     capRings:   LOW?16:36,           // displaced-cap radial subdivisions
     capASegMul: LOW?64:118,          // displaced-cap angular subdivisions (per full turn)
     pep:        false,               // R7: discrete 3D pepperoni dropped -> clean photo+displacement (fixes doubling)
-    strBridge:  LOW?6:11,            // cheese bridge strands per cut edge
-    strSag:     LOW?2:4,             // cheese sag-drip strands per cut edge
+    strBridge:  LOW?7:15,            // cheese bridge strands per cut edge (more = gooier pull)
+    strSag:     LOW?3:6,             // cheese sag-drip strands per cut edge
     strPts:     LOW?12:18,           // samples per strand
     strRad:     LOW?6:8,             // radial segments per strand tube
     steam:      LOW?9:18,            // steam puffs
@@ -678,7 +678,7 @@
             A.y+(B.y-A.y)*tt-env*sag,
             A.z+(B.z-A.z)*tt+tang.z*cz));}
         const globalThin=Math.max(0.36,1-L*0.10);                  // stay thick much longer
-        const baseR=(s.wisp?0.032:0.122)*s.thick*globalThin*Math.sqrt(snap); // thicker, fuller strands
+        const baseR=(s.wisp?0.034:0.136)*s.thick*globalThin*Math.sqrt(snap); // thicker, fuller, gooier strands
         const rfn=tt=>{const ends=0.56+0.44*Math.abs(2*tt-1);const neck=1-0.44*Math.sin(Math.PI*tt)*stretch;return Math.max(0.009,baseR*ends*neck);};
         const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,PTS-1,s.wisp?Math.min(6,Q.strRad):Q.strRad);if(old)old.dispose();
         s.mat.opacity=0.97*fade*snap; s.mesh.visible=true;
