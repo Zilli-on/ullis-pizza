@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#F5430B" />
+<link rel="icon" href="data:," />
+<title>ULLIS PIZZA — Glass · Pizza Passion Precision</title>
+<!--
+  GLASS BLOOM PROTOTYPE (glass.html) — a separate concept variant of index.html.
+  The 8 procedural wedges become a premium translucent / refractive amber glass object.
+  Hover (or touch-and-hold) blooms the whole pizza apart so the headline glows through the gaps;
+  releasing springs it back into a seamless whole pizza. No gooey cheese strands (clean / high-end).
+  Asset credits (see assets/CREDITS.txt): environment lighting "brown_photostudio_02" from Poly Haven, CC0.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,700..900;1,6..96,700..900&family=Playfair+Display:ital,wght@0,700;0,900;1,900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{ --orange:#F5430B; --orange-deep:#C9370A; --ink:#160a05; --cream:#F7E9D6; }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html{scroll-behavior:smooth;}
+  html,body{background:var(--orange);color:var(--ink);font-family:"DM Mono",monospace;overflow-x:hidden;}
+  body{cursor:none;}
+  @media(hover:none){body{cursor:auto;}}
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--ink);color:var(--orange);}
+
+  /* warm cinematic stage glow behind the pizza (sits under canvas + type) */
+  #stage{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:
+      radial-gradient(54% 50% at 50% 46%, rgba(255,176,104,.40) 0%, rgba(255,135,60,.15) 36%, rgba(245,67,11,0) 70%),
+      radial-gradient(120% 120% at 50% 122%, rgba(96,24,4,.52) 0%, rgba(96,24,4,0) 56%);}
+
+  #scene{position:fixed;inset:0;z-index:3;touch-action:pan-y;will-change:transform,opacity;}
+
+  #grain{position:fixed;inset:-50%;z-index:60;pointer-events:none;opacity:.06;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:grainmove 1.1s steps(3) infinite;}
+  @keyframes grainmove{0%{transform:translate(0,0);}33%{transform:translate(-4%,2%);}66%{transform:translate(3%,-3%);}100%{transform:translate(0,0);}}
+  #vignette{position:fixed;inset:0;z-index:59;pointer-events:none;
+    background:radial-gradient(122% 102% at 50% 40%,transparent 50%,rgba(34,9,2,.46) 100%);}
+
+  /* minimal glass reticle cursor */
+  #cutter{position:fixed;top:0;left:0;width:50px;height:50px;pointer-events:none;z-index:9999;
+    transform:translate(-50%,-50%);opacity:0;transition:opacity .3s ease, width .3s, height .3s;mix-blend-mode:difference;}
+  #cutter.show{opacity:1;}
+  #cutter svg{width:100%;height:100%;display:block;}
+  #dot{position:fixed;top:0;left:0;width:8px;height:8px;border-radius:50%;background:var(--ink);
+    pointer-events:none;z-index:9998;transform:translate(-50%,-50%);mix-blend-mode:difference;transition:opacity .3s;}
+  #cutlabel{position:fixed;top:0;left:0;transform:translate(-50%,32px);pointer-events:none;z-index:9999;
+    font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#fff;mix-blend-mode:difference;opacity:0;transition:opacity .25s;white-space:nowrap;}
+  #cutlabel.show{opacity:1;}
+  @media(hover:none){#cutter,#dot,#cutlabel{display:none;}}
+
+  header{position:fixed;top:0;left:0;width:100%;z-index:100;display:flex;justify-content:space-between;
+    align-items:center;padding:22px 32px;font-size:12px;letter-spacing:2px;text-transform:uppercase;
+    font-weight:500;mix-blend-mode:difference;color:#fff;}
+  header .mid{display:flex;gap:34px;}
+  @media(max-width:680px){header .mid{display:none;}header{padding:15px 18px;font-size:11px;}}
+
+  .hero{position:relative;width:100%;height:100svh;z-index:2;}
+  .hero-type{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;pointer-events:none;font-family:"Bodoni Moda",serif;
+    font-weight:900;color:var(--ink);line-height:.80;letter-spacing:-0.048em;z-index:2;will-change:transform;
+    text-shadow:0 2px 40px rgba(60,16,2,.18);}
+  .hero-type .l{display:block;font-size:clamp(58px,17.4vw,280px);text-transform:uppercase;transform:translateY(115%);opacity:0;}
+  .hero-type .l.it{font-style:italic;}
+  .hero-type .l.mid{position:relative;z-index:0;}
+
+  .scroll-hint{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:40;font-size:11px;
+    letter-spacing:3px;text-transform:uppercase;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:.85;transition:opacity .4s;}
+  .scroll-hint .bar{width:1px;height:34px;background:var(--ink);animation:drop 1.8s infinite;}
+  @keyframes drop{0%{transform:scaleY(0);transform-origin:top;}45%{transform:scaleY(1);transform-origin:top;}55%{transform:scaleY(1);transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
+  .corner-ar{position:fixed;bottom:24px;right:30px;z-index:40;font-size:11px;letter-spacing:2px;border:1px solid #fff;
+    padding:4px 10px;border-radius:20px;mix-blend-mode:difference;color:#fff;transition:opacity .4s;}
+  .touch-hint{position:fixed;bottom:74px;left:50%;transform:translateX(-50%);z-index:40;font-size:11px;
+    letter-spacing:2px;text-transform:uppercase;opacity:0;display:none;}
+  @media(hover:none){.touch-hint{display:block;animation:fade 4.5s ease forwards;animation-delay:1.4s;}}
+  @keyframes fade{0%{opacity:0;}16%{opacity:.9;}82%{opacity:.9;}100%{opacity:0;}}
+
+  .mastery{position:relative;min-height:104svh;width:100%;background:var(--ink);color:var(--cream);
+    display:flex;flex-direction:column;justify-content:center;padding:12vh 7vw;z-index:10;overflow:hidden;}
+  .mastery .eyebrow{font-size:12px;letter-spacing:4px;text-transform:uppercase;opacity:.55;margin-bottom:5vh;}
+  .mastery h2{font-family:"Bodoni Moda",serif;font-weight:900;font-size:clamp(50px,10vw,176px);line-height:.88;letter-spacing:-0.04em;text-transform:uppercase;margin-bottom:7vh;}
+  .mastery h2 em{color:var(--orange);font-style:italic;}
+  .mastery .masub{font-family:"DM Mono",monospace;font-size:13px;letter-spacing:1px;opacity:.72;margin:-3vh 0 6vh;max-width:600px;line-height:1.65;}
+  .mastery .masub b{color:var(--orange);font-weight:500;}
+  .creds{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;border-top:1px solid rgba(247,233,214,.22);}
+  .cred{padding:34px 26px 34px 0;border-bottom:1px solid rgba(247,233,214,.16);}
+  .cred .n{font-family:"Bodoni Moda",serif;font-size:50px;font-weight:700;color:var(--orange);line-height:1;margin-bottom:12px;}
+  .cred .t{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;opacity:.82;line-height:1.5;}
+
+  .rsvp{position:relative;min-height:100svh;width:100%;background:var(--orange);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:9vh 6vw;z-index:10;gap:40px;overflow:hidden;}
+  .rsvp .kicker{font-size:12px;letter-spacing:4px;text-transform:uppercase;opacity:.7;}
+  .rsvp h3{font-family:"Bodoni Moda",serif;font-weight:900;font-style:italic;font-size:clamp(44px,9vw,148px);line-height:.84;letter-spacing:-0.04em;text-transform:uppercase;}
+  .btn{position:relative;display:inline-flex;align-items:center;gap:16px;background:var(--ink);color:var(--cream);
+    padding:27px 48px;border-radius:60px;font-size:15px;letter-spacing:2px;text-transform:uppercase;font-weight:500;overflow:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1);}
+  .btn:hover{transform:scale(1.06);}
+  .btn .dot{width:9px;height:9px;border-radius:50%;background:var(--orange);animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.7);opacity:.5;}}
+  .rsvp .spots{font-size:12px;letter-spacing:3px;text-transform:uppercase;opacity:.65;}
+  .footer{position:absolute;bottom:22px;left:0;width:100%;display:flex;justify-content:space-between;padding:0 30px;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.55;}
+
+  .reveal{opacity:0;transform:translateY(44px);transition:opacity 1s ease,transform 1s cubic-bezier(.2,.8,.2,1);}
+  .reveal.in{opacity:1;transform:none;}
+
+  #load{position:fixed;inset:0;background:var(--orange);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .9s ease;}
+  #load.hide{opacity:0;pointer-events:none;}
+  #load .word{font-family:"Bodoni Moda",serif;font-style:italic;font-weight:900;font-size:clamp(40px,9vw,90px);color:var(--ink);letter-spacing:-0.03em;}
+  #load .ctr{font-size:13px;letter-spacing:3px;}
+  #load .line{width:42vw;max-width:380px;height:1px;background:rgba(22,10,5,.25);position:relative;overflow:hidden;}
+  #load .line i{position:absolute;left:0;top:0;height:100%;width:0;background:var(--ink);}
+</style>
+</head>
+<body>
+
+<div id="load">
+  <div class="word">Ullis&nbsp;Pizza</div>
+  <div class="line"><i id="loadbar"></i></div>
+  <div class="ctr"><span id="loadnum">0</span>%</div>
+</div>
+
+<div id="dot"></div>
+<div id="cutter"><svg viewBox="0 0 50 50">
+  <circle cx="25" cy="25" r="15" fill="none" stroke="#fff" stroke-width="1.4"/>
+  <circle cx="25" cy="25" r="2.2" fill="#fff"/>
+  <g stroke="#fff" stroke-width="1.2">
+    <line x1="25" y1="6" x2="25" y2="12"/><line x1="25" y1="38" x2="25" y2="44"/>
+    <line x1="6" y1="25" x2="12" y2="25"/><line x1="38" y1="25" x2="44" y2="25"/>
+  </g></svg></div>
+<div id="cutlabel">Hover to bloom</div>
+
+<div id="stage"></div>
+<div id="scene"></div>
+<div id="grain"></div>
+<div id="vignette"></div>
+
+<header>
+  <div class="brand">ULLIS.PIZZA</div>
+  <div class="mid"><span id="soundtoggle">[ SOUND OFF ]</span><span>[ GLASS ]</span></div>
+  <div class="contact">CONTACT</div>
+</header>
+
+<section class="hero">
+  <div class="hero-type" id="herotype">
+    <span class="l" data-i="0">Pizza</span>
+    <span class="l it mid" data-i="1">Passion</span>
+    <span class="l" data-i="2">Precision</span>
+  </div>
+</section>
+
+<div class="scroll-hint" id="scrollhint"><span>Scroll for more</span><div class="bar"></div></div>
+<div class="corner-ar" id="cornerar">[ GLASS ]</div>
+<div class="touch-hint">Touch &amp; hold to bloom the pizza apart</div>
+
+<section class="mastery">
+  <div class="eyebrow reveal">— The Maestro · Ullis Pizza</div>
+  <h2 class="reveal">Ulli<br><em>Haus</em></h2>
+  <div class="masub reveal">The maestro behind <b>Ullis Pizza</b> — creator and head chef who develops every pizza by hand.</div>
+  <div class="creds">
+    <div class="cred reveal"><div class="n">17</div><div class="t">Years of Pizza Mastery</div></div>
+    <div class="cred reveal"><div class="n">◆</div><div class="t">Certified Pizza Master</div></div>
+    <div class="cred reveal"><div class="n">◎</div><div class="t">World of Pizza</div></div>
+    <div class="cred reveal"><div class="n">♛</div><div class="t">Pizza Worldcup</div></div>
+  </div>
+</section>
+
+<section class="rsvp">
+  <div class="kicker reveal">— Next Event</div>
+  <h3 class="reveal">Taste the<br>Mastery</h3>
+  <a class="btn reveal" href="#" id="rsvpbtn"><span class="dot"></span> RSVP for Next Pizza Event</a>
+  <div class="spots reveal">Limited Spots</div>
+  <div class="footer"><span>ULLIS.PIZZA</span><span>© 2026 — Forno Italiano</span></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  const sceneEl=document.getElementById('scene');
+  let W=innerWidth,H=innerHeight;
+  const isTouch=matchMedia('(hover:none)').matches;
+  const TAU=Math.PI*2;
+
+  // ---- adaptive quality tier (this PC + phones are not powerful; 8GB RAM) ----
+  const uaMobile=/Android|iPhone|iPad|iPod|IEMobile|Opera Mini|Mobile|Silk/i.test(navigator.userAgent||'');
+  const smallVP=Math.min(W,H)<=820||W<=900;
+  const fewCores=(navigator.hardwareConcurrency||8)<=4;
+  const lowMem=(navigator.deviceMemory||8)<=4;
+  const LOW=uaMobile||smallVP||fewCores||lowMem;     // mobile / low-power tier
+  const Q={
+    dpr:        LOW?1.5:2,            // hard cap on devicePixelRatio
+    curve:      LOW?40:72,            // extrude curve segments per wedge
+    tubeRad:    LOW?8:12,            // cornicione tube radial segments
+    transmit:   !LOW,                 // full glass transmission/refraction = desktop only
+    blurIters:  LOW?2:4,             // bloom blur iterations
+    sceneScale: LOW?0.82:1.0,        // post supersample factor
+    ca:         LOW?0.0:0.0012,      // chromatic aberration (off on mobile)
+    dof:        !LOW                 // cinematic depth-of-field (desktop tier)
+  };
+
+  const renderer=new THREE.WebGLRenderer({antialias:!LOW,alpha:true,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,Q.dpr));
+  renderer.setSize(W,H);
+  // warm clear (alpha 0): keeps the canvas transparent so the DOM headline shows through the gaps,
+  // while giving the glass a warm amber tone to refract instead of black.
+  renderer.setClearColor(new THREE.Color(0xc6792f),0);
+  renderer.shadowMap.enabled=false;                 // glass is ethereal; grounding handled by a soft contact-shadow sprite
+  renderer.outputEncoding=THREE.sRGBEncoding;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.02;
+  sceneEl.appendChild(renderer.domElement);
+
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(34,W/H,0.1,100);
+  let camBase=new THREE.Vector3(0,5.6,11.0), camLook=new THREE.Vector3(0,0.05,0);
+  function placeCam(){
+    const aspect=W/H, tanV=Math.tan((34*Math.PI/180)/2);
+    let z;
+    if(aspect<1){                                  // portrait: pizza must fit across the narrow width
+      z=(RADIUS_HINT+0.62)/(tanV*aspect);
+      z=Math.min(Math.max(z,12.8),22.5);
+    }else{                                          // landscape / desktop: fit the tilted height + bloom spread
+      z=(RADIUS_HINT*1.02)/tanV;
+      z=Math.min(Math.max(z,11.6),13.6);
+    }
+    const portrait=aspect<1;
+    camBase.set(0, portrait?5.3:4.9, z);
+    camLook.set(0, portrait?0.26:0.12, 0);
+    camera.position.copy(camBase); camera.lookAt(camLook);
+  }
+  const RADIUS_HINT=2.55;
+  placeCam();
+
+  // ---- lighting: HDRI environment carries reflections; a few shaping lights on top ----
+  scene.add(new THREE.AmbientLight(0xffe9d6,0.30));
+  const key=new THREE.DirectionalLight(0xfff1dc,1.55);key.position.set(5.0,12.5,6.8);scene.add(key);
+  const fill=new THREE.DirectionalLight(0xffe2c0,0.55);fill.position.set(-6,4.5,4.5);scene.add(fill);
+  const rim=new THREE.DirectionalLight(0xff8a42,0.55);rim.position.set(-4,4.5,-7);scene.add(rim);
+  const warm=new THREE.PointLight(0xffc488,0.30,40);warm.position.set(3,3.2,5);scene.add(warm);
+  const spec=new THREE.PointLight(0xfff4e2,0.55,22);spec.position.set(1.2,5.2,3.6);scene.add(spec);
+
+  // procedural fallback environment (used until / unless the HDRI loads)
+  (function setupEnvFallback(){
+    const c=document.createElement('canvas');c.width=512;c.height=256;const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,0,256);
+    g.addColorStop(0,'#fff3e0');g.addColorStop(0.45,'#ffd9a8');g.addColorStop(0.7,'#c8642a');g.addColorStop(1,'#241108');
+    x.fillStyle=g;x.fillRect(0,0,512,256);
+    const h=x.createRadialGradient(150,66,4,150,66,120);h.addColorStop(0,'rgba(255,255,255,0.95)');h.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=h;x.beginPath();x.arc(150,66,120,0,7);x.fill();
+    const h2=x.createRadialGradient(380,108,4,380,108,90);h2.addColorStop(0,'rgba(255,210,150,0.7)');h2.addColorStop(1,'rgba(255,210,150,0)');
+    x.fillStyle=h2;x.beginPath();x.arc(380,108,90,0,7);x.fill();
+    const eq=new THREE.CanvasTexture(c);eq.mapping=THREE.EquirectangularReflectionMapping;
+    try{const pm=new THREE.PMREMGenerator(renderer);pm.compileEquirectangularShader();
+      scene.environment=pm.fromEquirectangular(eq).texture;pm.dispose();}
+    catch(e){scene.environment=eq;}
+  })();
+
+  // ---- real HDRI environment (Poly Haven, tonemapped) — drives believable glass reflection/refraction ----
+  const texLoader=new THREE.TextureLoader();
+  let ready=false;
+  texLoader.load('assets/studio_env_2k.jpg', function(tex){
+    tex.mapping=THREE.EquirectangularReflectionMapping;
+    try{const pm=new THREE.PMREMGenerator(renderer);pm.compileEquirectangularShader();
+      const env=pm.fromEquirectangular(tex).texture; scene.environment=env; pm.dispose(); tex.dispose();}
+    catch(e){tex.mapping=THREE.EquirectangularReflectionMapping; scene.environment=tex;}
+    ready=true;
+  }, undefined, function(){ready=true;});
+  setTimeout(()=>{ready=true;},3000);                 // safety so the loader never hangs
+
+  // contact shadow (soft, light — the glass should feel grounded but ethereal)
+  function shadowTex(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
+    const g=x.createRadialGradient(128,128,8,128,128,128);g.addColorStop(0,'rgba(26,7,2,0.5)');g.addColorStop(0.5,'rgba(26,7,2,0.18)');g.addColorStop(1,'rgba(26,7,2,0)');
+    x.fillStyle=g;x.fillRect(0,0,256,256);return new THREE.CanvasTexture(c);}
+  const shadow=new THREE.Mesh(new THREE.PlaneGeometry(9.0,9.0),new THREE.MeshBasicMaterial({map:shadowTex(),transparent:true,depthWrite:false,opacity:0.5}));
+  shadow.rotation.x=-Math.PI/2;shadow.position.y=-1.62;
+  const boardWrap=new THREE.Group();boardWrap.add(shadow);scene.add(boardWrap);
+
+  // ---- geometry constants (same 8-wedge layout as the realistic build) ----
+  const SLICES=8,RADIUS=2.55;
+  const SECT=TAU/SLICES;
+  const THICK=0.50;                                   // matches D1+D2+D3 of the original so the camera framing holds
+  const CR=(2*RADIUS*Math.sin(SECT/2))/(3*(SECT/2));  // sector centroid radius -> pivot the bloom tilt about each wedge's middle
+  const OUT=0.92, UP=0.74;                            // bloom travel: scatter outward + float upward (kept in-frame, premium-restrained)
+
+  // deterministic gentle surface relief -> adjacent wedges line up perfectly when whole
+  function reliefY(x,z){const rad=Math.hypot(x,z);const f=Math.min(1,rad/RADIUS);
+    const crown=(1-f)*0.055;
+    const lump=Math.sin(x*7.2+z*5.1)*Math.cos(z*6.3-x*4.4)*0.018;
+    const dip=Math.max(0,(f-0.78)/0.22);
+    return crown+lump - dip*dip*0.10;}
+
+  // ---- GLASS materials ----
+  // Desktop: real MeshPhysicalMaterial transmission/refraction (warm amber, low roughness, clearcoat + iridescence).
+  // Mobile/LOW: lighter translucent reflective amber (NO transmission) -> env reflection + clearcoat carry the glass read.
+  const glassMat = Q.transmit
+    ? new THREE.MeshPhysicalMaterial({
+        color:0xffc488, metalness:0.0, roughness:0.05,
+        transmission:0.92, ior:1.45, thickness:1.5,
+        attenuationColor:new THREE.Color(0xff9a4d), attenuationDistance:2.4,
+        clearcoat:1.0, clearcoatRoughness:0.08,
+        iridescence:0.18, iridescenceIOR:1.3,
+        envMapIntensity:1.55, emissive:0x2c1606, emissiveIntensity:0.07 })
+    : new THREE.MeshPhysicalMaterial({
+        color:0xffc488, metalness:0.0, roughness:0.12,
+        transmission:0.0, ior:1.4, transparent:true, opacity:0.6,
+        clearcoat:1.0, clearcoatRoughness:0.12, reflectivity:0.55,
+        envMapIntensity:1.7, emissive:0x3a1d08, emissiveIntensity:0.14 });
+
+  // frosted / etched glass cornicione rim
+  const cornMat = Q.transmit
+    ? new THREE.MeshPhysicalMaterial({
+        color:0xfff0dd, metalness:0.0, roughness:0.55,
+        transmission:0.4, ior:1.4, thickness:0.5,
+        clearcoat:0.5, clearcoatRoughness:0.35,
+        envMapIntensity:1.0, emissive:0x140a04, emissiveIntensity:0.06 })
+    : new THREE.MeshPhysicalMaterial({
+        color:0xfff0dd, metalness:0.0, roughness:0.5, transparent:true, opacity:0.82,
+        clearcoat:0.5, clearcoatRoughness:0.35,
+        envMapIntensity:1.1, emissive:0x1c0e05, emissiveIntensity:0.10 });
+
+  // ghost toppings: OPAQUE milky inclusions so the transmissive glass refracts/frosts them (suspended inside).
+  const ghostMat=new THREE.MeshStandardMaterial({color:0xfff1e2, roughness:0.62, metalness:0.0, envMapIntensity:0.5, emissive:0x180d04, emissiveIntensity:0.06});
+  const discGeo=new THREE.CylinderGeometry(1,1,1,LOW?16:26);
+  const pearlGeo=new THREE.SphereGeometry(1,LOW?8:12,LOW?6:9);
+
+  // Fresnel rim shell (additive) — gives the premium glass edge-glow and feeds the post bloom; intensifies as it blooms.
+  const fresnelMat=new THREE.ShaderMaterial({
+    uniforms:{ uColor:{value:new THREE.Color(0xffb56b)}, uPower:{value:2.5}, uIntensity:{value:0.4} },
+    vertexShader:[
+      'varying vec3 vWN; varying vec3 vWP;',
+      'void main(){',
+      '  vec4 wp = modelMatrix * vec4(position,1.0);',
+      '  vWP = wp.xyz;',
+      '  vWN = normalize(mat3(modelMatrix) * normal);',
+      '  gl_Position = projectionMatrix * viewMatrix * wp;',
+      '}'].join('\n'),
+    fragmentShader:[
+      'varying vec3 vWN; varying vec3 vWP;',
+      'uniform vec3 uColor; uniform float uPower; uniform float uIntensity;',
+      'void main(){',
+      '  vec3 V = normalize(cameraPosition - vWP);',
+      '  float f = pow(1.0 - clamp(dot(normalize(vWN), V), 0.0, 1.0), uPower);',
+      '  gl_FragColor = vec4(uColor * f * uIntensity, f * uIntensity);',
+      '}'].join('\n'),
+    transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.FrontSide });
+
+  const pizza=new THREE.Group();const pizzaWrap=new THREE.Group();pizzaWrap.add(pizza);scene.add(pizzaWrap);
+  const slices=[];
+
+  function buildCornicione(i,a0,a1){
+    const segs=Math.max(8,Math.round((a1-a0)/TAU*(LOW?40:72)));
+    const Rc=RADIUS*0.985, topY=THICK*0.66, pathPts=[];
+    for(let s=0;s<=segs;s++){const a=a0+(a1-a0)*s/segs;pathPts.push(new THREE.Vector3(Math.cos(a)*Rc,topY,-Math.sin(a)*Rc));}
+    const geo=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pathPts),segs,0.195,Q.tubeRad,false);
+    const pos=geo.attributes.position,nor=geo.attributes.normal;       // subtle frosted-glass irregularity
+    for(let v=0;v<pos.count;v++){const x=pos.getX(v),y=pos.getY(v),z=pos.getZ(v);
+      const bump=(Math.sin(x*5.5+z*4.7)*Math.cos(z*5.1-x*4.3))*0.03;
+      pos.setX(v,x+nor.getX(v)*bump);pos.setY(v,y+nor.getY(v)*bump);pos.setZ(v,z+nor.getZ(v)*bump);}
+    pos.needsUpdate=true;geo.computeVertexNormals();
+    const m=new THREE.Mesh(geo,cornMat);m.userData.si=i;return m;}
+
+  function buildGhosts(i,a0,a1){
+    const out=[];
+    // 2 ghost pepperoni discs (faint, frosted) embedded just under the glass surface
+    const discs=[{fa:0.34,fr:0.46,pr:0.24},{fa:0.66,fr:0.70,pr:0.205}];
+    for(const sp of discs){
+      const a=a0+(a1-a0)*sp.fa, r=RADIUS*sp.fr, x=Math.cos(a)*r, z=-Math.sin(a)*r;
+      const m=new THREE.Mesh(discGeo,ghostMat);
+      const pr=sp.pr*(0.85+Math.random()*0.3);
+      m.position.set(x, THICK-0.07+reliefY(x,z)*0.5, z);
+      m.scale.set(pr,0.085,pr);m.userData.si=i;out.push(m);
+    }
+    // a couple of tiny milky mozzarella "pearls" as elegant cheese hints
+    for(let p=0;p<2;p++){
+      const a=a0+(a1-a0)*(0.24+Math.random()*0.52), r=RADIUS*(0.30+Math.random()*0.46), x=Math.cos(a)*r, z=-Math.sin(a)*r;
+      const m=new THREE.Mesh(pearlGeo,ghostMat);
+      const pr=0.06+Math.random()*0.045;
+      m.position.set(x, THICK-0.05+reliefY(x,z)*0.5, z);
+      m.scale.set(pr,pr*0.6,pr);m.userData.si=i;out.push(m);
+    }
+    return out;}
+
+  function buildSlice(i){
+    const a0=(i/SLICES)*TAU, a1=((i+1)/SLICES)*TAU;
+    const shp=new THREE.Shape();
+    shp.moveTo(0,0);
+    shp.lineTo(Math.cos(a0)*RADIUS, Math.sin(a0)*RADIUS);
+    shp.absarc(0,0,RADIUS,a0,a1,false);
+    shp.lineTo(0,0);
+    const bodyGeo=new THREE.ExtrudeGeometry(shp,{depth:THICK,bevelEnabled:false,curveSegments:Q.curve});
+    bodyGeo.rotateX(-Math.PI/2);                       // shape XY -> world XZ, depth -> +Y (top at y=THICK)
+    (function(geo){const pos=geo.attributes.position;  // dome the top for nicer refraction variance
+      for(let v=0;v<pos.count;v++){const yy=pos.getY(v);
+        if(yy>THICK*0.5)pos.setY(v, yy+reliefY(pos.getX(v),pos.getZ(v)));}
+      pos.needsUpdate=true;geo.computeVertexNormals();})(bodyGeo);
+
+    const body=new THREE.Mesh(bodyGeo,glassMat);body.userData.si=i;body.name='glass';
+    const shell=new THREE.Mesh(bodyGeo,fresnelMat);shell.scale.setScalar(1.006);shell.userData.si=i;shell.renderOrder=3;
+    const corn=buildCornicione(i,a0,a1);
+    const ghosts=buildGhosts(i,a0,a1);
+
+    const g=new THREE.Group();
+    g.add(body);g.add(shell);g.add(corn);ghosts.forEach(m=>g.add(m));
+
+    const mid=(a0+a1)/2;
+    const dir=new THREE.Vector3(Math.cos(mid),0,-Math.sin(mid));   // -sin convention matches the extruded body
+    g.userData={i,a0,a1,mid,dir,
+      cen:new THREE.Vector3(Math.cos(mid)*CR,THICK*0.5,-Math.sin(mid)*CR),
+      lift:0,
+      bp:{ stagger:(i%4)*0.05+Math.random()*0.05,    // depth-staggered cascade on bloom + reassemble
+           outV:OUT*(0.82+Math.random()*0.40),
+           upV:UP*(0.62+Math.random()*0.80),
+           tilt:0.40+Math.random()*0.50,             // roll about its own radial axis -> opens gaps, shows glass cut faces
+           wob:0.04+Math.random()*0.05,
+           ws:0.5+Math.random()*0.7,
+           ph:Math.random()*TAU,
+           axis:dir.clone() }};
+    return g;
+  }
+  for(let i=0;i<SLICES;i++){const s=buildSlice(i);pizza.add(s);slices.push(s);}
+  pizza.rotation.x=0.52;pizza.position.y=0.14;          // oblique 3/4 view (top toward viewer)
+
+  // ---- interaction: hover (desktop) / touch-and-hold (mobile) -> full-pizza bloom; release -> reassemble ----
+  const ray=new THREE.Raycaster();
+  const mouse=new THREE.Vector2(-2,-2);
+  let hovered=-1, holding=false;
+  let bloomTarget=0, bloom=0, bloomVel=0;
+  const dot=document.getElementById('dot'),cutter=document.getElementById('cutter'),cutlabel=document.getElementById('cutlabel');
+  let mx=W/2,my=H/2,dx=W/2,dy=H/2;
+
+  function setMouse(px,py){const r=renderer.domElement.getBoundingClientRect();mouse.x=((px-r.left)/r.width)*2-1;mouse.y=-((py-r.top)/r.height)*2+1;mx=px;my=py;}
+  function pickAt(px,py){                               // immediate raycast for touch (hover lags a frame)
+    const r=renderer.domElement.getBoundingClientRect();
+    const v=new THREE.Vector2(((px-r.left)/r.width)*2-1, -((py-r.top)/r.height)*2+1);
+    ray.setFromCamera(v,camera);
+    const ms=[];slices.forEach(g=>g.children.forEach(c=>{if(c.userData&&c.userData.si!==undefined)ms.push(c);}));
+    const hit=ray.intersectObjects(ms,false);return hit.length?hit[0].object.userData.si:-1;
+  }
+  addEventListener('mousemove',e=>setMouse(e.clientX,e.clientY));
+  // TOUCH: non-passive so we can preventDefault while holding (the page must not scroll mid-bloom).
+  //        Touch off the pizza never preventDefaults -> normal vertical scroll still works.
+  sceneEl.addEventListener('touchstart',e=>{const tc=e.touches[0];if(!tc)return;
+    const h=pickAt(tc.clientX,tc.clientY); if(h>=0){holding=true;setMouse(tc.clientX,tc.clientY);e.preventDefault();}},{passive:false});
+  sceneEl.addEventListener('touchmove',e=>{const tc=e.touches[0];if(!tc)return;
+    if(holding){e.preventDefault();setMouse(tc.clientX,tc.clientY);}},{passive:false});
+  sceneEl.addEventListener('touchend',e=>{holding=false;mouse.set(-2,-2);},{passive:false});
+  sceneEl.addEventListener('touchcancel',e=>{holding=false;mouse.set(-2,-2);},{passive:false});
+  setTimeout(()=>{cutter.classList.add('show');},800);
+
+  let pYaw=0,pPit=0,camPX=0,camPY=0;
+  addEventListener('mousemove',e=>{const nx=(e.clientX/W)*2-1,ny=(e.clientY/H)*2-1;pYaw=nx*0.34;pPit=ny*0.12;camPX=nx*0.55;camPY=ny*0.32;});
+  function onResize(){W=innerWidth;H=innerHeight;camera.aspect=W/H;placeCam();camera.updateProjectionMatrix();renderer.setSize(W,H);resizePP();}
+  addEventListener('resize',onResize);
+  addEventListener('orientationchange',()=>setTimeout(onResize,250));
+  let scrollP=0;addEventListener('scroll',()=>{scrollP=Math.min(1,scrollY/innerHeight);});
+
+  // sound (ambient hum toggle; soft chime when the bloom kicks off)
+  let actx=null;
+  function ensureCtx(){if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();return actx;}
+  function playChime(){ if(!soundOn)return; const a=ensureCtx();
+    const o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=520;
+    g.gain.value=0;o.connect(g);g.connect(a.destination);o.start();
+    g.gain.linearRampToValueAtTime(0.05,a.currentTime+0.02);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.5);
+    o.frequency.exponentialRampToValueAtTime(720,a.currentTime+0.4);o.stop(a.currentTime+0.55);}
+  let soundOn=false,hum,humGain;
+  document.getElementById('soundtoggle').addEventListener('click',function(){
+    const a=ensureCtx();
+    if(!hum){hum=a.createOscillator();humGain=a.createGain();hum.type='sine';hum.frequency.value=68;humGain.gain.value=0;hum.connect(humGain);humGain.connect(a.destination);hum.start();}
+    soundOn=!soundOn;humGain.gain.linearRampToValueAtTime(soundOn?0.03:0,a.currentTime+0.4);
+    this.textContent=soundOn?'[ SOUND ON ]':'[ SOUND OFF ]';});
+  document.getElementById('rsvpbtn').addEventListener('click',e=>{e.preventDefault();document.querySelector('.rsvp .spots').textContent='Thanks — we’ll be in touch!';});
+
+  // ---- post: bloom + chromatic aberration + cinematic grade (core three.js) ----
+  let PP=true;
+  let rtScene,rtA,rtB,rtC,rtD, fsScene,fsCam,quad, brightMat,blurMat,copyMat,compMat;
+  function ppRes(){return Math.min(devicePixelRatio,Q.dpr)*Q.sceneScale;}
+  function makeRT(w,h){return new THREE.WebGLRenderTarget(w,h,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat});}
+  function initPP(){
+    try{
+      const dpr=ppRes(),fw=Math.floor(W*dpr),fh=Math.floor(H*dpr),hw=Math.max(2,fw>>1),hh=Math.max(2,fh>>1);
+      rtScene=makeRT(fw,fh);rtA=makeRT(hw,hh);rtB=makeRT(hw,hh);
+      if(Q.dof){rtC=makeRT(hw,hh);rtD=makeRT(hw,hh);}
+      fsScene=new THREE.Scene();fsCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+      quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),null);quad.frustumCulled=false;fsScene.add(quad);
+      const vert='varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}';
+      brightMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},threshold:{value:0.82}},vertexShader:vert,
+        fragmentShader:'uniform sampler2D tDiffuse;uniform float threshold;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(0.299,0.587,0.114));float f=smoothstep(threshold,threshold+0.18,l);gl_FragColor=vec4(c.rgb*f,c.a*f);}'});
+      blurMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},dir:{value:new THREE.Vector2()},res:{value:new THREE.Vector2(hw,hh)}},vertexShader:vert,
+        fragmentShader:'uniform sampler2D tDiffuse;uniform vec2 dir;uniform vec2 res;varying vec2 vUv;void main(){vec2 px=dir/res;vec4 s=texture2D(tDiffuse,vUv)*0.227027;s+=texture2D(tDiffuse,vUv+px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv-px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv+px*3.2308)*0.070270;s+=texture2D(tDiffuse,vUv-px*3.2308)*0.070270;gl_FragColor=s;}'});
+      copyMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null}},vertexShader:vert,
+        fragmentShader:'uniform sampler2D tDiffuse;varying vec2 vUv;void main(){gl_FragColor=texture2D(tDiffuse,vUv);}'});
+      compMat=new THREE.ShaderMaterial({transparent:true,uniforms:{tScene:{value:null},tBloom:{value:null},tDof:{value:null},bloom:{value:0.26},ca:{value:Q.ca},dofAmt:{value:Q.dof?0.55:0.0}},vertexShader:vert,
+        fragmentShader:[
+          'uniform sampler2D tScene;uniform sampler2D tBloom;uniform sampler2D tDof;',
+          'uniform float bloom;uniform float ca;uniform float dofAmt;varying vec2 vUv;',
+          'void main(){',
+          '  vec2 d=vUv-0.5;',
+          '  float r=texture2D(tScene,vUv+d*ca).r;',
+          '  float g=texture2D(tScene,vUv).g;',
+          '  float b=texture2D(tScene,vUv-d*ca).b;',
+          '  vec4 sc=texture2D(tScene,vUv);',
+          '  vec3 col=vec3(r,g,b);',
+          '  if(dofAmt>0.0){',
+          '    vec2 fc=vec2(0.5,0.47);',
+          '    float fm=smoothstep(0.30,0.80,length((vUv-fc)*vec2(1.0,1.12)));',
+          '    vec3 blur=texture2D(tDof,vUv).rgb;',
+          '    col=mix(col,blur,fm*dofAmt);',
+          '  }',
+          '  vec4 bl=texture2D(tBloom,vUv);',
+          '  col+=bl.rgb*bloom;',
+          '  float L=dot(col,vec3(0.299,0.587,0.114));',
+          '  float sat=length(col-vec3(L));',
+          '  col=mix(vec3(L),col, 1.0-0.18*smoothstep(0.24,0.58,sat));',
+          '  col*=vec3(1.04,1.005,0.96);',
+          '  col=clamp(col,0.0,4.0);',
+          '  col=pow(col, vec3(0.975,0.99,1.04));',
+          '  float vig=smoothstep(1.02,0.30,length(d));',
+          '  col*=mix(0.74,1.0,vig);',
+          '  float a=clamp(sc.a+bl.a*bloom,0.0,1.0);',
+          '  gl_FragColor=vec4(col,a);',
+          '}'].join('\n')});
+    }catch(e){PP=false;}
+  }
+  function resizePP(){if(!PP)return;const dpr=ppRes(),fw=Math.floor(W*dpr),fh=Math.floor(H*dpr),hw=Math.max(2,fw>>1),hh=Math.max(2,fh>>1);
+    rtScene.setSize(fw,fh);rtA.setSize(hw,hh);rtB.setSize(hw,hh);if(rtC){rtC.setSize(hw,hh);rtD.setSize(hw,hh);}blurMat.uniforms.res.value.set(hw,hh);}
+  function ppPass(mat,target){quad.material=mat;renderer.setRenderTarget(target||null);renderer.clear();renderer.render(fsScene,fsCam);}
+  function renderPP(){
+    renderer.setRenderTarget(rtScene);renderer.clear();renderer.render(scene,camera);
+    brightMat.uniforms.tDiffuse.value=rtScene.texture;ppPass(brightMat,rtA);
+    for(let i=0;i<Q.blurIters;i++){
+      blurMat.uniforms.tDiffuse.value=rtA.texture;blurMat.uniforms.dir.value.set(1,0);ppPass(blurMat,rtB);
+      blurMat.uniforms.tDiffuse.value=rtB.texture;blurMat.uniforms.dir.value.set(0,1);ppPass(blurMat,rtA);
+    }
+    if(Q.dof && rtC){
+      copyMat.uniforms.tDiffuse.value=rtScene.texture;ppPass(copyMat,rtC);
+      for(let i=0;i<2;i++){
+        blurMat.uniforms.tDiffuse.value=rtC.texture;blurMat.uniforms.dir.value.set(1.5,0);ppPass(blurMat,rtD);
+        blurMat.uniforms.tDiffuse.value=rtD.texture;blurMat.uniforms.dir.value.set(0,1.5);ppPass(blurMat,rtC);
+      }
+    }
+    compMat.uniforms.tScene.value=rtScene.texture;compMat.uniforms.tBloom.value=rtA.texture;
+    compMat.uniforms.tDof.value=(Q.dof&&rtC)?rtC.texture:rtScene.texture;
+    renderer.setRenderTarget(null);renderer.clear();quad.material=compMat;renderer.render(fsScene,fsCam);
+  }
+  initPP();
+
+  const DEMO=location.search.indexOf('demo')>=0;
+  const clock=new THREE.Clock();
+  function lerp(a,b,t){return a+(b-a)*t;}
+  // adaptive FPS guard: after warm-up, if the device struggles shed cost once (lower DPR, drop DOF/CA, fewer blur passes)
+  let fpsWarm=0,fpsAccum=0,fpsFrames=0,fpsDone=false;
+  let prevBloomActive=false;
+  function animate(){
+    requestAnimationFrame(animate);
+    const dt=Math.min(clock.getDelta(),0.045),t=clock.getElapsedTime();
+    if(!fpsDone){ if(fpsWarm<60){fpsWarm++;} else { fpsAccum+=dt;fpsFrames++;
+      if(fpsFrames>=70){ fpsDone=true; const avg=fpsFrames/Math.max(0.0001,fpsAccum);
+        if(avg<46){ renderer.setPixelRatio(Math.min(devicePixelRatio, LOW?1.15:1.4));
+          Q.blurIters=1; Q.dof=false;
+          if(compMat){compMat.uniforms.dofAmt.value=0.0; compMat.uniforms.ca.value=0.0;}
+          resizePP(); } } } }
+
+    // cursor follow
+    dx=lerp(dx,mx,0.2);dy=lerp(dy,my,0.2);
+    dot.style.left=mx+'px';dot.style.top=my+'px';
+    cutter.style.left=dx+'px';cutter.style.top=dy+'px';
+    cutlabel.style.left=dx+'px';cutlabel.style.top=dy+'px';
+
+    // cinematic camera: slow dolly + gentle sway + mouse parallax
+    camera.position.x=lerp(camera.position.x, camBase.x+Math.sin(t*0.12)*0.45+camPX, 0.06);
+    camera.position.y=lerp(camera.position.y, camBase.y+Math.sin(t*0.17)*0.16+camPY, 0.06);
+    camera.position.z=lerp(camera.position.z, camBase.z+Math.cos(t*0.10)*0.42, 0.06);
+    camera.lookAt(camLook);
+
+    pizza.rotation.y+=dt*0.08*(bloom>0.15?0.3:1);
+    pizzaWrap.rotation.y=lerp(pizzaWrap.rotation.y,pYaw,0.05);
+    pizzaWrap.rotation.x=lerp(pizzaWrap.rotation.x,pPit,0.05);
+    const bob=Math.sin(t*0.8)*0.08;pizza.position.y=0.14+bob;
+    shadow.material.opacity=Math.max(0.12,0.5-bob*0.3-bloom*0.15);shadow.scale.setScalar(1.0+bob*0.14+bloom*0.10);
+
+    const s=scrollP;
+    sceneEl.style.opacity=(1-s*1.15).toFixed(3);
+    pizzaWrap.position.y=lerp(0,2.2,s);boardWrap.position.y=lerp(0,2.2,s);
+    const sc=lerp(1,0.7,s);pizzaWrap.scale.setScalar(sc);boardWrap.scale.setScalar(sc);
+    document.getElementById('scrollhint').style.opacity=(1-s*2).toFixed(2);
+
+    // hover detection
+    if(s<0.85){ray.setFromCamera(mouse,camera);
+      const ms=[];slices.forEach(g=>g.children.forEach(c=>{if(c.userData&&c.userData.si!==undefined)ms.push(c);}));
+      const hit=ray.intersectObjects(ms,false);hovered=hit.length?hit[0].object.userData.si:-1;
+    }else hovered=-1;
+
+    // bloom target: hover (desktop) or touch-and-hold (mobile); demo forces bloomed
+    if(isTouch){ bloomTarget=holding?1:0; } else { bloomTarget=(hovered>=0)?1:0; }
+    if(DEMO){ bloomTarget=1; }
+    cutter.classList.toggle('show', (hovered>=0) && !isTouch);
+    cutlabel.classList.toggle('show', (hovered>=0) && !isTouch);
+
+    // global bloom: buttery critically-damped spring (frame-rate independent)
+    { const omega=6.0, expf=Math.exp(-omega*dt);
+      const delta=bloom-bloomTarget, temp=(bloomVel+omega*delta)*dt;
+      bloom=bloomTarget+(delta+temp)*expf;
+      bloomVel=(bloomVel-omega*temp)*expf;
+      if(bloom<0)bloom=0; if(bloom>1.05)bloom=1.05; }
+    const bloomActive=bloom>0.12;
+    if(bloomActive&&!prevBloomActive)playChime();
+    prevBloomActive=bloomActive;
+
+    // per-wedge bloom transform (depth-staggered scatter + gentle roll/wobble; identity at rest = seamless whole)
+    slices.forEach(g=>{
+      const bp=g.userData.bp;
+      let v=bloom*(1+bp.stagger)-bp.stagger; v=v<0?0:(v>1?1:v); v=v*v*(3-2*v);
+      g.userData.lift=v;
+      const wob=Math.sin(t*bp.ws+bp.ph)*bp.wob*v;
+      const ang=v*bp.tilt+wob;
+      g.quaternion.setFromAxisAngle(bp.axis,ang);
+      const ox=g.userData.dir.x*v*bp.outV;
+      const oz=g.userData.dir.z*v*bp.outV;
+      const oy=v*bp.upV+Math.sin(t*0.7+bp.ph)*0.03*v;
+      const C=g.userData.cen, Cr=C.clone().applyQuaternion(g.quaternion);
+      g.position.set(ox+C.x-Cr.x, oy+C.y-Cr.y, oz+C.z-Cr.z);   // pivot the roll about the wedge centroid, then travel
+    });
+
+    // hover-driven glow: bloom intensity + fresnel rim rise as the pizza opens
+    if(compMat)compMat.uniforms.bloom.value=0.24+bloom*0.30;
+    fresnelMat.uniforms.uIntensity.value=0.30+bloom*0.95;
+
+    if(PP){try{renderPP();}catch(e){PP=false;renderer.setRenderTarget(null);renderer.render(scene,camera);}}
+    else{renderer.setRenderTarget(null);renderer.render(scene,camera);}
+  }
+  animate();
+
+  // loader — holds until the env is ready, then reveals the type
+  let prog=0;const lb=document.getElementById('loadbar'),ln=document.getElementById('loadnum');
+  let revealed=false;
+  function revealType(){if(revealed)return;revealed=true;
+    document.getElementById('load').classList.add('hide');
+    document.querySelectorAll('.hero-type .l').forEach((el,i)=>{el.style.transition='transform 1s cubic-bezier(.2,.9,.2,1) '+(0.1+i*0.12)+'s, opacity 1s '+(0.1+i*0.12)+'s';el.style.transform='translateY(0)';el.style.opacity='1';});}
+  const SHOT=location.search.indexOf('shot')>=0;
+  if(DEMO||SHOT){revealType();}
+  const li=setInterval(()=>{
+    const cap=(ready?100:92);
+    prog=Math.min(cap,prog+Math.random()*16);
+    lb.style.width=prog+'%';ln.textContent=Math.floor(prog);
+    if(prog>=100){clearInterval(li);setTimeout(revealType,320);}
+  },120);
+  setTimeout(()=>{ if(!revealed){prog=100;lb.style.width='100%';ln.textContent='100';setTimeout(revealType,200);} },5000);
+
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in');}),{threshold:0.15});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(i%5*0.08)+'s';io.observe(el);});
+})();
+</script>
+</body>
+</html>
