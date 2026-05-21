@@ -306,14 +306,15 @@
   placeCam();
 
   // ---- lighting: HDRI environment carries reflections; a few shaping lights on top ----
-  scene.add(new THREE.AmbientLight(0xffe9d6,0.30));   // raised ambient -> the crystal sits inside the bright orange world
-  scene.add(new THREE.HemisphereLight(0xffe2c2,0xff5a1f,0.30));  // orange ground bounce tints the glass with the world
-  const key=new THREE.DirectionalLight(0xfff1dc,1.55);key.position.set(5.0,12.5,6.8);scene.add(key);
-  const fill=new THREE.DirectionalLight(0xffd0a0,0.46);fill.position.set(-6,4.5,4.5);scene.add(fill);
-  const rim=new THREE.DirectionalLight(0xffca6a,0.90);rim.position.set(-4,5.0,-7);scene.add(rim);   // gold back-rim -> precious edge glow
+  scene.add(new THREE.AmbientLight(0xffe9d6,0.16));   // lower ambient -> contrast returns so the glossy glints read
+  scene.add(new THREE.HemisphereLight(0xffe2c2,0xff5a1f,0.18));  // gentle orange world bounce
+  const key=new THREE.DirectionalLight(0xfff1dc,1.7);key.position.set(5.0,12.5,6.8);scene.add(key);
+  const fill=new THREE.DirectionalLight(0xffd0a0,0.40);fill.position.set(-6,4.5,4.5);scene.add(fill);
+  const rim=new THREE.DirectionalLight(0xffca6a,1.0);rim.position.set(-4,5.0,-7);scene.add(rim);   // gold back-rim -> precious edge glow
   const goldBack=new THREE.SpotLight(0xffb851,0.58,40,0.9,0.6);goldBack.position.set(2.5,-3,-6);scene.add(goldBack);  // faint up-light catches cut faces
   const warm=new THREE.PointLight(0xffc488,0.28,40);warm.position.set(3,3.2,5);scene.add(warm);
-  const spec=new THREE.PointLight(0xfff6e8,0.72,22);spec.position.set(1.2,5.2,3.6);scene.add(spec);   // crisp jewel highlight
+  const spec=new THREE.PointLight(0xfffaf0,1.8,26);spec.position.set(1.2,5.2,3.6);scene.add(spec);   // crisp jewel highlight (bright)
+  const glint=new THREE.PointLight(0xffffff,1.5,30);glint.position.set(-3.2,3.6,5.2);scene.add(glint);  // 2nd hard white glint -> glossy specular as it rotates
 
   // procedural fallback environment (used until / unless the HDRI loads) — warm orange studio
   (function setupEnvFallback(){
@@ -376,14 +377,14 @@
   // through via the low opacity.
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xffffff, metalness:0.0, roughness:0.04,
-        transmission:1.0, ior:1.5, thickness:0.9,                    // clear glass that refracts the scene behind it
+        color:0xffffff, metalness:0.0, roughness:0.012,             // optically sharp -> crisp glossy glints + clear refraction
+        transmission:1.0, ior:1.52, thickness:1.18,                 // thicker body -> the text behind LENS-distorts clearly through the glass
         transparent:true,
-        clearcoat:1.0, clearcoatRoughness:0.04,                      // glossy lacquer sheen (sharp, not frosted)
-        attenuationColor:new THREE.Color(0xffa860), attenuationDistance:6.0,  // warm amber tint through the body
-        specularIntensity:0.6,
-        envMapIntensity:0.7,                                         // glossy reflections, low enough to stay see-through
-        emissive:0x1a0b04, emissiveIntensity:0.03 })                // faint warm core -> never goes pale
+        clearcoat:1.0, clearcoatRoughness:0.02,                      // hard glossy lacquer sheen
+        attenuationColor:new THREE.Color(0xffb877), attenuationDistance:11.0,  // light warm tint, long distance = clear (not a pale wash)
+        specularIntensity:1.0,
+        envMapIntensity:1.9,                                         // strong glossy reflections -> reads as real glass
+        emissive:0x000000, emissiveIntensity:0.0 })                  // no flat core wash -> contrast + gloss return
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
         transmission:0.0, ior:1.46, transparent:true, opacity:0.6,   // lighter translucent amber glass for mobile
@@ -394,9 +395,9 @@
   const cornMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
         // etched amber crust edge — also transmission-free so it never triggers the scene transmission pass
-        color:0xff9a4e, metalness:0.0, roughness:0.34, transparent:true, opacity:0.9,
-        clearcoat:0.6, clearcoatRoughness:0.25,
-        envMapIntensity:1.0, emissive:0x2a1206, emissiveIntensity:0.08 })
+        color:0xffb066, metalness:0.0, roughness:0.06, transparent:true, opacity:0.92,
+        clearcoat:1.0, clearcoatRoughness:0.03,
+        envMapIntensity:1.9, emissive:0x180a02, emissiveIntensity:0.04 })
     : new THREE.MeshPhysicalMaterial({
         color:0xffe9cf, metalness:0.0, roughness:0.46, transparent:true, opacity:0.8,
         clearcoat:0.6, clearcoatRoughness:0.3,
