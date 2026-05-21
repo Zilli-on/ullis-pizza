@@ -396,10 +396,10 @@
     ? new THREE.MeshPhysicalMaterial({
         color:0xfff3ea, metalness:0.0, roughness:0.05,
         transmission:0.0, transparent:true, opacity:0.16,           // NEAR-CLEAR body -> text behind stays dark/crisp, body ~= background; glass is defined by the bright EDGE + reflections, not a tint
-        ior:1.5, reflectivity:0.7,
-        clearcoat:1.0, clearcoatRoughness:0.04,                      // hard glossy lacquer
+        ior:1.5, reflectivity:0.55,
+        clearcoat:0.6, clearcoatRoughness:0.04,                      // clearcoat kept ONLY for sharp point-light glints
         specularIntensity:1.0,
-        envMapIntensity:1.7,                                         // bright studio streak reflections = polished-glass gloss
+        envMapIntensity:0.1,                                         // KILL the broad env reflection -> that uniform bright env-wash was the salmon veil in every version; gloss now = sharp glints + bright edge
         emissive:0x000000, emissiveIntensity:0.0 })
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
