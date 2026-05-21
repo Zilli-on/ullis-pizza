@@ -214,7 +214,7 @@
   renderer.setSize(W,H);
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.92;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.97;
   sceneEl.appendChild(renderer.domElement);
 
   const scene=new THREE.Scene();
@@ -241,15 +241,15 @@
 
   // ---- lighting: HDRI environment carries most of it; a few shaping lights on top ----
   scene.add(new THREE.AmbientLight(0xffe9d6,0.16));
-  const key=new THREE.DirectionalLight(0xfff1dc,1.80);key.position.set(5.0,12.5,6.8);          // strong warm key
+  const key=new THREE.DirectionalLight(0xfff1dc,2.05);key.position.set(5.0,12.5,6.8);          // strong warm key (raised -> more dimensional, mouth-watering)
   key.castShadow=true;key.shadow.mapSize.set(Q.shadow,Q.shadow);key.shadow.camera.near=1;key.shadow.camera.far=42;
   key.shadow.camera.left=-7;key.shadow.camera.right=7;key.shadow.camera.top=7;key.shadow.camera.bottom=-7;
   key.shadow.bias=-0.00035;key.shadow.radius=4;scene.add(key);
-  const fill=new THREE.DirectionalLight(0xffe2c0,0.52);fill.position.set(-6,4.5,4.5);scene.add(fill);  // soft warm fill
-  const rim=new THREE.DirectionalLight(0xff7a32,0.40);rim.position.set(-4,4.5,-7);scene.add(rim);       // gentler back rim (less neon)
-  const warm=new THREE.PointLight(0xffc488,0.20,40);warm.position.set(3,3.2,5);scene.add(warm);
+  const fill=new THREE.DirectionalLight(0xffe2c0,0.38);fill.position.set(-6,4.5,4.5);scene.add(fill);  // lower fill -> deeper shadows, more dimension
+  const rim=new THREE.DirectionalLight(0xff8a3a,0.50);rim.position.set(-4,4.5,-7);scene.add(rim);       // warm back rim glow on the crust
+  const warm=new THREE.PointLight(0xffc488,0.34,40);warm.position.set(3,3.2,5);scene.add(warm);          // richer warm bounce
   // R7: tight specular so melted cheese reads wet/oily/hot (glossy highlights that bloom)
-  const spec=new THREE.PointLight(0xfff4e2,0.92,22);spec.position.set(1.2,5.2,3.6);scene.add(spec);   // brighter -> wet cheese glistens & blooms
+  const spec=new THREE.PointLight(0xfff4e2,1.08,22);spec.position.set(1.2,5.2,3.6);scene.add(spec);   // brighter -> wet cheese glistens & blooms
 
   // procedural fallback environment (used until / unless the HDRI loads)
   (function setupEnvFallback(){
