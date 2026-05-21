@@ -184,30 +184,71 @@
   const isTouch=matchMedia('(hover:none)').matches;
   const TAU=Math.PI*2;
 
-  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  // ---- R7 adaptive quality tier (this PC + phones are not powerful; 8GB RAM) ----
+  const uaMobile=/Android|iPhone|iPad|iPod|IEMobile|Opera Mini|Mobile|Silk/i.test(navigator.userAgent||'');
+  const smallVP=Math.min(W,H)<=820||W<=900;
+  const fewCores=(navigator.hardwareConcurrency||8)<=4;
+  const lowMem=(navigator.deviceMemory||8)<=4;
+  const LOW=uaMobile||smallVP||fewCores||lowMem;     // mobile / low-power tier
+  const Q={
+    dpr:        LOW?1.5:2,            // hard cap on devicePixelRatio
+    capRings:   LOW?16:36,           // displaced-cap radial subdivisions
+    capASegMul: LOW?64:118,          // displaced-cap angular subdivisions (per full turn)
+    pep:        false,               // R7: discrete 3D pepperoni dropped -> clean photo+displacement (fixes doubling)
+    strBridge:  LOW?6:11,            // cheese bridge strands per cut edge
+    strSag:     LOW?2:4,             // cheese sag-drip strands per cut edge
+    strPts:     LOW?12:18,           // samples per strand
+    strRad:     LOW?6:8,             // radial segments per strand tube
+    steam:      LOW?9:18,            // steam puffs
+    shadow:     LOW?1024:2048,       // shadow map size
+    deriveS:    LOW?640:1024,        // photo-derivation working resolution
+    blurIters:  LOW?2:4,             // bloom blur iterations
+    sceneScale: LOW?0.82:1.0,        // scene render-target supersample factor (post)
+    ca:         LOW?0.0:0.0012,      // chromatic aberration (off on mobile)
+    dof:        !LOW                 // cinematic depth-of-field (desktop tier)
+  };
+
+  const renderer=new THREE.WebGLRenderer({antialias:!LOW,alpha:true,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,Q.dpr));
   renderer.setSize(W,H);
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.8;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.92;
   sceneEl.appendChild(renderer.domElement);
 
   const scene=new THREE.Scene();
   const camera=new THREE.PerspectiveCamera(34,W/H,0.1,100);
   let camBase=new THREE.Vector3(0,5.6,11.0), camLook=new THREE.Vector3(0,0.05,0);
-  function placeCam(){const m=W<760; camBase.set(0, m?5.7:5.0, m?13.2:11.4); camLook.set(0, m?0.2:0.12, 0);
-    camera.position.copy(camBase); camera.lookAt(camLook);}
+  // R7 responsive framing: portrait phones fit the pizza WIDTH (no side cut-off); landscape fits height.
+  function placeCam(){
+    const aspect=W/H, tanV=Math.tan((34*Math.PI/180)/2);
+    let z;
+    if(aspect<1){                                  // portrait: pizza must fit across the narrow width
+      z=(RADIUS_HINT+0.46)/(tanV*aspect);
+      z=Math.min(Math.max(z,12.4),21.5);
+    }else{                                          // landscape / desktop: fit the tilted height
+      z=(RADIUS_HINT*0.92)/tanV;
+      z=Math.min(Math.max(z,10.8),13.0);
+    }
+    const portrait=aspect<1;
+    camBase.set(0, portrait?5.3:4.9, z);
+    camLook.set(0, portrait?0.26:0.12, 0);
+    camera.position.copy(camBase); camera.lookAt(camLook);
+  }
+  const RADIUS_HINT=2.55;                            // matches RADIUS below (placeCam runs before slices are built)
   placeCam();
 
   // ---- lighting: HDRI environment carries most of it; a few shaping lights on top ----
-  scene.add(new THREE.AmbientLight(0xffe9d6,0.12));
-  const key=new THREE.DirectionalLight(0xfff0db,1.62);key.position.set(5.5,12,6.5);
-  key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.camera.near=1;key.shadow.camera.far=42;
+  scene.add(new THREE.AmbientLight(0xffe9d6,0.16));
+  const key=new THREE.DirectionalLight(0xfff1dc,1.80);key.position.set(5.0,12.5,6.8);          // strong warm key
+  key.castShadow=true;key.shadow.mapSize.set(Q.shadow,Q.shadow);key.shadow.camera.near=1;key.shadow.camera.far=42;
   key.shadow.camera.left=-7;key.shadow.camera.right=7;key.shadow.camera.top=7;key.shadow.camera.bottom=-7;
   key.shadow.bias=-0.00035;key.shadow.radius=4;scene.add(key);
-  const fill=new THREE.DirectionalLight(0xffd9b4,0.38);fill.position.set(-6,4,4);scene.add(fill);
-  const rim=new THREE.DirectionalLight(0xff5e1f,0.55);rim.position.set(-4,4.5,-7);scene.add(rim);   // brand-orange back rim
-  const warm=new THREE.PointLight(0xffb066,0.16,38);warm.position.set(3,3.2,5);scene.add(warm);
+  const fill=new THREE.DirectionalLight(0xffe2c0,0.52);fill.position.set(-6,4.5,4.5);scene.add(fill);  // soft warm fill
+  const rim=new THREE.DirectionalLight(0xff7a32,0.40);rim.position.set(-4,4.5,-7);scene.add(rim);       // gentler back rim (less neon)
+  const warm=new THREE.PointLight(0xffc488,0.20,40);warm.position.set(3,3.2,5);scene.add(warm);
+  // R7: tight specular so melted cheese reads wet/oily/hot (glossy highlights that bloom)
+  const spec=new THREE.PointLight(0xfff4e2,0.50,22);spec.position.set(1.2,5.2,3.6);scene.add(spec);
 
   // procedural fallback environment (used until / unless the HDRI loads)
   (function setupEnvFallback(){
@@ -267,9 +308,11 @@
       x.fillStyle='rgba('+(222+Math.random()*28|0)+','+(192+Math.random()*32|0)+','+(138+Math.random()*42|0)+','+(0.08+Math.random()*0.22)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
     for(let i=0;i<480;i++){const px=Math.random()*512,py=Math.random()*512,r=3+Math.random()*12;          // golden blisters
       x.fillStyle='rgba('+(150+Math.random()*72|0)+','+(92+Math.random()*56|0)+',36,'+(0.16+Math.random()*0.5)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
-    for(let cl=0;cl<30;cl++){const cx=Math.random()*512,cy=Math.random()*512;                            // clustered char speckle
-      for(let i=0;i<16;i++){const px=cx+(Math.random()-0.5)*50,py=cy+(Math.random()-0.5)*50,r=1.4+Math.random()*5.5;
-        x.fillStyle='rgba('+(34+Math.random()*42|0)+','+(18+Math.random()*22|0)+',8,'+(0.32+Math.random()*0.5)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}}
+    for(let cl=0;cl<44;cl++){const cx=Math.random()*512,cy=Math.random()*512;                            // leopard-spotted char (Neapolitan look)
+      const big=Math.random()<0.28;                                                                       // a few bold blooms
+      const spread=big?28:54, count=big?9:15, rmax=big?9:5.5;
+      for(let i=0;i<count;i++){const px=cx+(Math.random()-0.5)*spread,py=cy+(Math.random()-0.5)*spread,r=1.3+Math.random()*rmax;
+        x.fillStyle='rgba('+(26+Math.random()*40|0)+','+(13+Math.random()*20|0)+',7,'+(0.34+Math.random()*0.52)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}}
     const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;}
   // height field for blistered bread relief (bright = raised bubbles)
   function breadHeight(){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
@@ -291,7 +334,7 @@
   const charMat=new THREE.MeshStandardMaterial({map:crTex,roughness:0.82,color:0x7c4f25,envMapIntensity:0.45});
   const sauceMat=new THREE.MeshStandardMaterial({color:0x9c2a0d,roughness:0.66,envMapIntensity:0.6});
   // the hero material — real pizza photo as albedo; normal+roughness+displacement derived at runtime
-  const cheeseMat=new THREE.MeshStandardMaterial({map:fallbackCheese(),color:0xffffff,roughness:0.8,metalness:0.0,envMapIntensity:1.05});
+  const cheeseMat=new THREE.MeshStandardMaterial({map:fallbackCheese(),color:0xfff3e0,roughness:0.6,metalness:0.0,envMapIntensity:1.35,emissive:0x140a02,emissiveIntensity:0.05});
 
   // R6: real raised pepperoni discs (low-poly domed disc, curled-up rim + greasy cupped center).
   function pepTex(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
@@ -314,8 +357,8 @@
     g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
     g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
     g.setIndex(idx);g.computeVertexNormals();return g;}
-  const pepGeoUnit=makePepGeo();
-  const pepMat=new THREE.MeshStandardMaterial({map:pepTex(),color:0xffffff,roughness:0.5,metalness:0.0,emissive:0x180402,emissiveIntensity:0.05,envMapIntensity:1.18});
+  const pepGeoUnit=Q.pep?makePepGeo():null;        // R7: only built if discrete pepperoni are enabled (they aren't)
+  const pepMat=Q.pep?new THREE.MeshStandardMaterial({map:pepTex(),color:0xffffff,roughness:0.5,metalness:0.0,emissive:0x180402,emissiveIntensity:0.05,envMapIntensity:1.18}):null;
 
   let photoReady=false;
   texLoader.load('assets/pizza_top.jpg', function(tex){
@@ -327,7 +370,7 @@
   (function deriveFromPhoto(){
     const img=new Image(); img.crossOrigin='anonymous';
     img.onload=function(){ try{
-      const S=1024;
+      const S=Q.deriveS;
       const ac=document.createElement('canvas');ac.width=ac.height=S;const ax=ac.getContext('2d');
       ax.drawImage(img,0,0,S,S);
       const id=ax.getImageData(0,0,S,S),d=id.data;
@@ -350,8 +393,8 @@
         ad[i]=r;ad[i+1]=g;ad[i+2]=b;ad[i+3]=255;
         // roughness: reddish/greasy cheese, sauce, pepperoni -> glossy(low); pale crust & dark char -> matte(high)
         const redness=Math.max(0,(d[i]-d[i+2])/255);
-        let ro=0.86-0.52*redness-0.12*(L/255);
-        ro=Math.max(0.30,Math.min(0.95,ro));
+        let ro=0.74-0.50*redness-0.16*(L/255);          // R7: glossier overall -> wet, oily, hot melted cheese
+        ro=Math.max(0.22,Math.min(0.90,ro));
         const rv=ro*255; rough[i]=rv;rough[i+1]=rv;rough[i+2]=rv;rough[i+3]=255;
         // HEIGHT (gray): bright cheese raised w/ bubbles, pepperoni red discs proud, dark sauce-gaps/char lower
         const Ln=L/255, redn=Math.max(0,(r-g))/255;
@@ -373,16 +416,18 @@
       aox.putImageData(aoid,0,0);
       const aoTex=new THREE.CanvasTexture(aoc);aoTex.anisotropy=4;
       cheeseMat.map=albedo;
-      cheeseMat.roughnessMap=roughTex;cheeseMat.roughness=1.0;
-      cheeseMat.normalMap=normalTex;cheeseMat.normalScale=new THREE.Vector2(1.15,1.15);
+      cheeseMat.roughnessMap=roughTex;cheeseMat.roughness=0.92;
+      cheeseMat.normalMap=normalTex;cheeseMat.normalScale=new THREE.Vector2(0.92,0.92);   // tamer surface relief
       cheeseMat.aoMap=aoTex;cheeseMat.aoMapIntensity=1.0;
-      // REAL relief: drive vertex displacement on the tessellated cap from the same height field
+      // REAL relief: drive vertex displacement on the tessellated cap from the same height field (R7: subtle, realistic)
       const heightTex=new THREE.CanvasTexture(hc);heightTex.anisotropy=2;
-      cheeseMat.displacementMap=heightTex;cheeseMat.displacementScale=0.105;cheeseMat.displacementBias=-0.024;
+      cheeseMat.displacementMap=heightTex;cheeseMat.displacementScale=0.062;cheeseMat.displacementBias=-0.018;
       cheeseMat.needsUpdate=true; photoReady=true;
 
       // ---- detect pepperoni discs from the photo → real raised meshes parented to each wedge ----
-      try{
+      // R7: DISABLED. R6's discrete meshes doubled with the flat photo-pepperoni underneath (misaligned).
+      // Clean photo albedo + subtle vertex displacement now reads more real and is far lighter on mobile.
+      if(Q.pep) try{
         const G=110,gc2=document.createElement('canvas');gc2.width=gc2.height=G;const gx2=gc2.getContext('2d');
         gx2.drawImage(img,0,0,G,G);const gdat=gx2.getImageData(0,0,G,G).data;
         const score=new Float32Array(G*G);
@@ -476,14 +521,14 @@
     m.castShadow=true;m.receiveShadow=true;return m;}
   // deterministic surface relief (function of x,z only) → adjacent wedges + photo-skin line up perfectly
   function reliefY(x,z){const rad=Math.hypot(x,z);const f=Math.min(1,rad/RADIUS);
-    const crown=(1-f)*0.06;                                        // gentle dome through the middle
-    const lump=Math.sin(x*7.2+z*5.1)*Math.cos(z*6.3-x*4.4)*0.042;  // bumpy molten cheese
+    const crown=(1-f)*0.055;                                       // gentle dome through the middle
+    const lump=Math.sin(x*7.2+z*5.1)*Math.cos(z*6.3-x*4.4)*0.020;  // R7: subtle molten relief (was 0.042 / too wild)
     const dip=Math.max(0,(f-0.78)/0.22);                           // cheese recedes under the raised crust rim
-    return crown+lump - dip*dip*0.13;}
+    return crown+lump - dip*dip*0.12;}
   // R6: high-subdivision tessellated wedge cap (radial grid) → enough verts for REAL vertex displacement.
   // planar top-down UV matches the photo; base reliefY keeps it aligned with the cheese body + neighbours.
   function buildCapGeo(a0,a1){
-    const RINGS=40, ASEG=Math.max(10,Math.round((a1-a0)/TAU*120));
+    const RINGS=Q.capRings, ASEG=Math.max(8,Math.round((a1-a0)/TAU*Q.capASegMul));
     const pos=[],uv=[],idx=[];
     for(let ir=0;ir<=RINGS;ir++){const r=RADIUS*ir/RINGS;
       for(let ia=0;ia<=ASEG;ia++){const a=a0+(a1-a0)*ia/ASEG, x=Math.cos(a)*r, z=-Math.sin(a)*r;
@@ -550,7 +595,7 @@
   // bridge strands: one end anchored to the neighbour/gap cut edge (stationary), other end to the
   //   pulled wedge's cut edge -> they get longer + thinner (neck) as the slice travels, then snap.
   // sag strands: cheese clinging off the pulled wedge's exposed cut face, drooping down (drip).
-  const PTS=18, NB=12, NS=4;                                      // R5: many more bridges + sag-drips per edge → abundant, gooey pull
+  const PTS=Q.strPts, NB=Q.strBridge, NS=Q.strSag;               // R7: counts tier-scaled (mobile lighter) — still abundant, gooey pull
   const strandMatBase=new THREE.MeshStandardMaterial({color:0xf2c45a,roughness:0.34,metalness:0.0,emissive:0x281a05,emissiveIntensity:0.35,envMapIntensity:1.1,transparent:true,opacity:0});
   const cheeseStrands=[];
   function makeStrand(type,edge,clumps){
@@ -616,7 +661,7 @@
         const globalThin=Math.max(0.36,1-L*0.10);                  // stay thick much longer
         const baseR=(s.wisp?0.032:0.122)*s.thick*globalThin*Math.sqrt(snap); // thicker, fuller strands
         const rfn=tt=>{const ends=0.56+0.44*Math.abs(2*tt-1);const neck=1-0.44*Math.sin(Math.PI*tt)*stretch;return Math.max(0.009,baseR*ends*neck);};
-        const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,PTS-1,s.wisp?6:8);if(old)old.dispose();
+        const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,PTS-1,s.wisp?Math.min(6,Q.strRad):Q.strRad);if(old)old.dispose();
         s.mat.opacity=0.97*fade*snap; s.mesh.visible=true;
       } else {                                                     // sag-drip clinging off the exposed cut face
         if(L<0.20){s.mesh.visible=false;continue;}
@@ -630,7 +675,7 @@
           new THREE.Vector3(top.x+tang.x*s.curl*0.64, top.y-hang*1.20, top.z+tang.z*s.curl*0.64)];
         const fat=s.thick;
         const rfn=tt=>Math.max(0.009,(0.078+0.055*Math.sin(tt*Math.PI))*fat*(1-Math.pow(tt,5))); // chunkier cheese sags
-        const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,14,8);if(old)old.dispose();
+        const old=s.mesh.geometry;s.mesh.geometry=makeTube(pts,rfn,Q.strPts-4,Q.strRad);if(old)old.dispose();
         s.mat.opacity=0.96*Math.min(1,fade+0.25)*grow; s.mesh.visible=true;
       }
     }
@@ -644,9 +689,9 @@
     return new THREE.CanvasTexture(c);}
   const sTex=smokeTex();
   const steam=new THREE.Group();scene.add(steam);
-  const baseSteam=new THREE.SpriteMaterial({map:sTex,color:0xfff6ec,opacity:0,transparent:true,depthWrite:false,blending:THREE.NormalBlending});
+  const baseSteam=new THREE.SpriteMaterial({map:sTex,color:0xfff1e0,opacity:0,transparent:true,depthWrite:false,blending:THREE.NormalBlending});
   const puffs=[];
-  for(let i=0;i<20;i++){const sp=new THREE.Sprite(baseSteam.clone());
+  for(let i=0;i<Q.steam;i++){const sp=new THREE.Sprite(baseSteam.clone());
     const sz=1.6+Math.random()*1.4;sp.scale.set(sz,sz,1);
     sp.position.set((Math.random()-0.5)*3.2, 0.55+Math.random()*2.0, (Math.random()-0.5)*3.2);
     sp.userData={sp:0.16+Math.random()*0.22, ph:Math.random()*6.28, amp:0.18+Math.random()*0.25, base:Math.random()};
@@ -660,24 +705,39 @@
   let mx=W/2,my=H/2,dx=W/2,dy=H/2;
 
   function setMouse(px,py){const r=renderer.domElement.getBoundingClientRect();mouse.x=((px-r.left)/r.width)*2-1;mouse.y=-((py-r.top)/r.height)*2+1;mx=px;my=py;}
+  // immediate raycast — touch must know on FIRST contact whether a wedge was grabbed (hover lags a frame)
+  function pickAt(px,py){
+    const r=renderer.domElement.getBoundingClientRect();
+    const v=new THREE.Vector2(((px-r.left)/r.width)*2-1, -((py-r.top)/r.height)*2+1);
+    ray.setFromCamera(v,camera);
+    const ms=[];slices.forEach(g=>g.children.forEach(c=>{if(c.userData&&c.userData.si!==undefined)ms.push(c);}));
+    const hit=ray.intersectObjects(ms,false);return hit.length?hit[0].object.userData.si:-1;
+  }
+  const PULLDIV=isTouch?150:200;                                    // touch a touch more sensitive (smaller screens)
   function onDown(px,py){setMouse(px,py);lastX=px;lastY=py;dragDist=0;
-    if(hovered>=0){grabbed=hovered;cutlabel.textContent='Slicing';playSlice();}}
+    let h=hovered; if(h<0)h=pickAt(px,py);
+    if(h>=0){grabbed=h;hovered=h;cutlabel.textContent='Slicing';playSlice();}}
   function onMove(px,py){
-    if(grabbed>=0){dragDist+=Math.hypot(px-lastX,py-lastY);pull=Math.min(2.0,dragDist/200);}
+    if(grabbed>=0){dragDist+=Math.hypot(px-lastX,py-lastY);pull=Math.min(2.0,dragDist/PULLDIV);}
     wheelAngle+=(px-lastX)*0.6; lastX=px;lastY=py;lastMoveT=performance.now();setMouse(px,py);
   }
   function onUp(){grabbed=-1;pull=0;cutlabel.textContent='Drag to slice';}
   addEventListener('mousemove',e=>onMove(e.clientX,e.clientY));
   addEventListener('mousedown',e=>onDown(e.clientX,e.clientY));
   addEventListener('mouseup',onUp);
-  sceneEl.addEventListener('touchstart',e=>{if(e.touches[0])onDown(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
-  sceneEl.addEventListener('touchmove',e=>{if(e.touches[0])onMove(e.touches[0].clientX,e.touches[0].clientY);},{passive:true});
-  sceneEl.addEventListener('touchend',()=>{onUp();mouse.set(-2,-2);},{passive:true});
+  // ---- TOUCH: non-passive so we can preventDefault DURING an active slice drag (page must not scroll while slicing).
+  //      When the touch is NOT on a wedge, we never preventDefault, so normal vertical scroll still works. ----
+  sceneEl.addEventListener('touchstart',e=>{const t=e.touches[0];if(!t)return;onDown(t.clientX,t.clientY);if(grabbed>=0)e.preventDefault();},{passive:false});
+  sceneEl.addEventListener('touchmove',e=>{const t=e.touches[0];if(!t)return;if(grabbed>=0)e.preventDefault();onMove(t.clientX,t.clientY);},{passive:false});
+  sceneEl.addEventListener('touchend',e=>{onUp();mouse.set(-2,-2);},{passive:false});
+  sceneEl.addEventListener('touchcancel',e=>{onUp();mouse.set(-2,-2);},{passive:false});
   setTimeout(()=>{cutter.classList.add('show');cutlabel.classList.add('show');},800);
 
   let pYaw=0,pPit=0,camPX=0,camPY=0;
   addEventListener('mousemove',e=>{const nx=(e.clientX/W)*2-1,ny=(e.clientY/H)*2-1;pYaw=nx*0.34;pPit=ny*0.12;camPX=nx*0.55;camPY=ny*0.32;});
-  addEventListener('resize',()=>{W=innerWidth;H=innerHeight;camera.aspect=W/H;placeCam();camera.updateProjectionMatrix();renderer.setSize(W,H);resizePP();});
+  function onResize(){W=innerWidth;H=innerHeight;camera.aspect=W/H;placeCam();camera.updateProjectionMatrix();renderer.setSize(W,H);resizePP();}
+  addEventListener('resize',onResize);
+  addEventListener('orientationchange',()=>setTimeout(onResize,250));   // re-fit after the rotation settles
   let scrollP=0;addEventListener('scroll',()=>{scrollP=Math.min(1,scrollY/innerHeight);});
 
   // sound
@@ -698,52 +758,77 @@
 
   // ---- post: bloom + chromatic aberration + cinematic grade (core three.js) ----
   let PP=true;
-  let rtScene,rtA,rtB, fsScene,fsCam,quad, brightMat,blurMat,compMat;
-  function ppRes(){return Math.min(devicePixelRatio,2);}
+  let rtScene,rtA,rtB,rtC,rtD, fsScene,fsCam,quad, brightMat,blurMat,copyMat,compMat;
+  function ppRes(){return Math.min(devicePixelRatio,Q.dpr)*Q.sceneScale;}
   function makeRT(w,h){return new THREE.WebGLRenderTarget(w,h,{minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat});}
   function initPP(){
     try{
       const dpr=ppRes(),fw=Math.floor(W*dpr),fh=Math.floor(H*dpr),hw=Math.max(2,fw>>1),hh=Math.max(2,fh>>1);
       rtScene=makeRT(fw,fh);rtA=makeRT(hw,hh);rtB=makeRT(hw,hh);
+      if(Q.dof){rtC=makeRT(hw,hh);rtD=makeRT(hw,hh);}            // separate pair for the depth-of-field scene blur
       fsScene=new THREE.Scene();fsCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
       quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),null);quad.frustumCulled=false;fsScene.add(quad);
       const vert='varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}';
-      brightMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},threshold:{value:0.9}},vertexShader:vert,
+      brightMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},threshold:{value:0.80}},vertexShader:vert,
         fragmentShader:'uniform sampler2D tDiffuse;uniform float threshold;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(0.299,0.587,0.114));float f=smoothstep(threshold,threshold+0.18,l);gl_FragColor=vec4(c.rgb*f,c.a*f);}'});
       blurMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null},dir:{value:new THREE.Vector2()},res:{value:new THREE.Vector2(hw,hh)}},vertexShader:vert,
         fragmentShader:'uniform sampler2D tDiffuse;uniform vec2 dir;uniform vec2 res;varying vec2 vUv;void main(){vec2 px=dir/res;vec4 s=texture2D(tDiffuse,vUv)*0.227027;s+=texture2D(tDiffuse,vUv+px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv-px*1.3846)*0.316216;s+=texture2D(tDiffuse,vUv+px*3.2308)*0.070270;s+=texture2D(tDiffuse,vUv-px*3.2308)*0.070270;gl_FragColor=s;}'});
-      compMat=new THREE.ShaderMaterial({transparent:true,uniforms:{tScene:{value:null},tBloom:{value:null},bloom:{value:0.26},ca:{value:0.0015}},vertexShader:vert,
+      copyMat=new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null}},vertexShader:vert,
+        fragmentShader:'uniform sampler2D tDiffuse;varying vec2 vUv;void main(){gl_FragColor=texture2D(tDiffuse,vUv);}'});
+      compMat=new THREE.ShaderMaterial({transparent:true,uniforms:{tScene:{value:null},tBloom:{value:null},tDof:{value:null},bloom:{value:0.30},ca:{value:Q.ca},dofAmt:{value:Q.dof?0.6:0.0}},vertexShader:vert,
         fragmentShader:[
-          'uniform sampler2D tScene;uniform sampler2D tBloom;uniform float bloom;uniform float ca;varying vec2 vUv;',
+          'uniform sampler2D tScene;uniform sampler2D tBloom;uniform sampler2D tDof;',
+          'uniform float bloom;uniform float ca;uniform float dofAmt;varying vec2 vUv;',
           'void main(){',
           '  vec2 d=vUv-0.5;',
-          '  float r=texture2D(tScene,vUv+d*ca).r;',
+          '  float r=texture2D(tScene,vUv+d*ca).r;',           // chromatic aberration (0 on mobile)
           '  float g=texture2D(tScene,vUv).g;',
           '  float b=texture2D(tScene,vUv-d*ca).b;',
           '  vec4 sc=texture2D(tScene,vUv);',
+          '  vec3 col=vec3(r,g,b);',
+          '  if(dofAmt>0.0){',                                  // shallow DOF: background softens, the pizza pops
+          '    vec2 fc=vec2(0.5,0.47);',
+          '    float fm=smoothstep(0.30,0.80,length((vUv-fc)*vec2(1.0,1.12)));',
+          '    vec3 blur=texture2D(tDof,vUv).rgb;',
+          '    col=mix(col,blur,fm*dofAmt);',
+          '  }',
           '  vec4 bl=texture2D(tBloom,vUv);',
-          '  vec3 col=vec3(r,g,b)+bl.rgb*bloom;',
+          '  col+=bl.rgb*bloom;',                               // hot glistening bloom on the cheese highlights
+          '  // ---- appetizing grade: tame the radioactive orange, push warm golden ----',
           '  float L=dot(col,vec3(0.299,0.587,0.114));',
-          '  col=mix(vec3(L),col,1.0);',           // neutral saturation (no over-pop)
-          '  col*=vec3(1.012,1.0,0.992);',         // very mild warmth
-          '  float vig=smoothstep(0.98,0.32,length(d));',
-          '  col*=mix(0.82,1.0,vig);',             // vignette (multiplicative — no transparent fringe)
+          '  float sat=length(col-vec3(L));',
+          '  col=mix(vec3(L),col, 1.0-0.20*smoothstep(0.24,0.58,sat));',  // pull back ONLY the most saturated neon
+          '  col*=vec3(1.05,1.005,0.95);',                      // amber warmth
+          '  col=clamp(col,0.0,4.0);',
+          '  col=pow(col, vec3(0.975,0.99,1.05));',             // golden push: lift warm mids, deepen blue',
+          '  float vig=smoothstep(1.02,0.30,length(d));',
+          '  col*=mix(0.74,1.0,vig);',                          // tasteful vignette
           '  float a=clamp(sc.a+bl.a*bloom,0.0,1.0);',
           '  gl_FragColor=vec4(col,a);',
           '}'].join('\n')});
     }catch(e){PP=false;}
   }
   function resizePP(){if(!PP)return;const dpr=ppRes(),fw=Math.floor(W*dpr),fh=Math.floor(H*dpr),hw=Math.max(2,fw>>1),hh=Math.max(2,fh>>1);
-    rtScene.setSize(fw,fh);rtA.setSize(hw,hh);rtB.setSize(hw,hh);blurMat.uniforms.res.value.set(hw,hh);}
+    rtScene.setSize(fw,fh);rtA.setSize(hw,hh);rtB.setSize(hw,hh);if(rtC){rtC.setSize(hw,hh);rtD.setSize(hw,hh);}blurMat.uniforms.res.value.set(hw,hh);}
   function ppPass(mat,target){quad.material=mat;renderer.setRenderTarget(target||null);renderer.clear();renderer.render(fsScene,fsCam);}
   function renderPP(){
     renderer.setRenderTarget(rtScene);renderer.clear();renderer.render(scene,camera);
+    // bloom: bright pass + separable gaussian (iteration count tier-scaled)
     brightMat.uniforms.tDiffuse.value=rtScene.texture;ppPass(brightMat,rtA);
-    blurMat.uniforms.tDiffuse.value=rtA.texture;blurMat.uniforms.dir.value.set(1,0);ppPass(blurMat,rtB);
-    blurMat.uniforms.tDiffuse.value=rtB.texture;blurMat.uniforms.dir.value.set(0,1);ppPass(blurMat,rtA);
-    blurMat.uniforms.tDiffuse.value=rtA.texture;blurMat.uniforms.dir.value.set(1,0);ppPass(blurMat,rtB);
-    blurMat.uniforms.tDiffuse.value=rtB.texture;blurMat.uniforms.dir.value.set(0,1);ppPass(blurMat,rtA);
+    for(let i=0;i<Q.blurIters;i++){
+      blurMat.uniforms.tDiffuse.value=rtA.texture;blurMat.uniforms.dir.value.set(1,0);ppPass(blurMat,rtB);
+      blurMat.uniforms.tDiffuse.value=rtB.texture;blurMat.uniforms.dir.value.set(0,1);ppPass(blurMat,rtA);
+    }
+    // depth-of-field: blur a copy of the FULL scene (desktop tier only)
+    if(Q.dof && rtC){
+      copyMat.uniforms.tDiffuse.value=rtScene.texture;ppPass(copyMat,rtC);
+      for(let i=0;i<2;i++){
+        blurMat.uniforms.tDiffuse.value=rtC.texture;blurMat.uniforms.dir.value.set(1.5,0);ppPass(blurMat,rtD);
+        blurMat.uniforms.tDiffuse.value=rtD.texture;blurMat.uniforms.dir.value.set(0,1.5);ppPass(blurMat,rtC);
+      }
+    }
     compMat.uniforms.tScene.value=rtScene.texture;compMat.uniforms.tBloom.value=rtA.texture;
+    compMat.uniforms.tDof.value=(Q.dof&&rtC)?rtC.texture:rtScene.texture;
     renderer.setRenderTarget(null);renderer.clear();quad.material=compMat;renderer.render(fsScene,fsCam);
   }
   initPP();
@@ -751,9 +836,17 @@
   const DEMO=location.search.indexOf('demo')>=0;
   const clock=new THREE.Clock();
   function lerp(a,b,t){return a+(b-a)*t;}
+  // R7 adaptive FPS guard: after a short warm-up, if the device is struggling shed cost ONCE (lower DPR, drop DOF/CA, fewer blur passes)
+  let fpsWarm=0,fpsAccum=0,fpsFrames=0,fpsDone=false;
   function animate(){
     requestAnimationFrame(animate);
     const dt=Math.min(clock.getDelta(),0.045),t=clock.getElapsedTime();
+    if(!fpsDone){ if(fpsWarm<60){fpsWarm++;} else { fpsAccum+=dt;fpsFrames++;
+      if(fpsFrames>=70){ fpsDone=true; const avg=fpsFrames/Math.max(0.0001,fpsAccum);
+        if(avg<46){ renderer.setPixelRatio(Math.min(devicePixelRatio, LOW?1.15:1.4));
+          Q.blurIters=1; Q.dof=false;
+          if(compMat){compMat.uniforms.dofAmt.value=0.0; compMat.uniforms.ca.value=0.0;}
+          resizePP(); } } } }
     if(DEMO){grabbed=6;pull=1.18;}   // pull a FRONT wedge toward the camera: keeps the lifted slice + cross-section fully in frame
 
     // cursor follow
@@ -796,11 +889,12 @@
       let tgt=0;
       if(g.userData.i===grabbed){tgt=pull;activeSlice=g;}
       else if(g.userData.i===hovered && grabbed<0){tgt=0.14;}
-      const k=140, damp=Math.pow(0.0008,dt);
-      g.userData.vel+=(tgt-g.userData.lift)*k*dt;
-      g.userData.vel*=damp;
-      g.userData.lift+=g.userData.vel*dt;
-      if(g.userData.lift<0){g.userData.lift=0;g.userData.vel*=-0.3;}
+      // R7: buttery critically-damped spring — frame-rate independent, no jitter; glides out, eases back smoothly
+      const omega=13.0, expf=Math.exp(-omega*dt);
+      const delta=g.userData.lift-tgt, temp=(g.userData.vel+omega*delta)*dt;
+      g.userData.lift=tgt+(delta+temp)*expf;
+      g.userData.vel=(g.userData.vel-omega*temp)*expf;
+      if(g.userData.lift<0){g.userData.lift=0;if(g.userData.vel<0)g.userData.vel=0;}
       const L=g.userData.lift;
       const ox=g.userData.dir.x*L*PULL_OUT, oy=L*PULL_UP, oz=g.userData.dir.z*L*PULL_OUT;
       const rt=Math.min(1,L/1.25);                                 // ramp the cut-face tilt in with the pull
@@ -818,7 +912,7 @@
       const life=(p.position.y-0.55)/3.0;
       p.position.x+=Math.sin(t*0.6+p.userData.ph)*p.userData.amp*dt;
       p.position.z+=Math.cos(t*0.5+p.userData.ph*1.3)*p.userData.amp*dt;
-      p.material.opacity=Math.max(0, Math.sin(Math.min(1,life)*Math.PI)*0.14 )*(1-s)*(1+(grabbed>=0?0.8:0));
+      p.material.opacity=Math.max(0, Math.sin(Math.min(1,life)*Math.PI)*0.17 )*(1-s)*(1+(grabbed>=0?0.8:0));
       const sz=1.6+life*2.6;p.scale.set(sz,sz,1);
       p.material.rotation=(p.userData.base*6.28)+t*0.12;
       if(p.position.y>3.7){p.position.y=0.55;p.position.x=(Math.random()-0.5)*3.2;p.position.z=(Math.random()-0.5)*3.2;}});
