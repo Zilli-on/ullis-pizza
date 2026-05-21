@@ -479,6 +479,27 @@
     return g;
   }
   for(let i=0;i<SLICES;i++){const s=buildSlice(i);pizza.add(s);slices.push(s);}
+
+  // ===== SEAMLESS WHOLE DISC (KODE-style) — one solid crystal pizza shown AT REST (no visible slice seams).
+  // The moment you interact (hover / scroll) it is swapped for the wedges, which "cut" apart and scatter.
+  let wholeDisc=null;
+  (function buildWhole(){
+    const shp=new THREE.Shape();
+    shp.absarc(0,0,RADIUS,0,TAU,false);
+    const bodyGeo=new THREE.ExtrudeGeometry(shp,{depth:THICK,bevelEnabled:false,curveSegments:Q.curve*2});
+    bodyGeo.rotateX(-Math.PI/2);
+    (function(geo){const pos=geo.attributes.position;          // same domed top as the wedges -> identical silhouette
+      for(let v=0;v<pos.count;v++){const yy=pos.getY(v);
+        if(yy>THICK*0.5)pos.setY(v, yy+reliefY(pos.getX(v),pos.getZ(v)));}
+      pos.needsUpdate=true;geo.computeVertexNormals();})(bodyGeo);
+    const body=new THREE.Mesh(bodyGeo,glassMat);body.name='glass';
+    const shell=new THREE.Mesh(bodyGeo,fresnelMat);shell.scale.setScalar(1.006);shell.renderOrder=3;
+    const corn=buildCornicione(0,0,TAU);                       // one continuous crust ring (no radial seams)
+    wholeDisc=new THREE.Group();
+    wholeDisc.add(body);wholeDisc.add(shell);wholeDisc.add(corn);
+    pizza.add(wholeDisc);
+  })();
+
   pizza.rotation.x=0.52;pizza.position.y=0.14;          // oblique 3/4 view (top toward viewer)
 
   // ===== 3D HERO HEADLINE — rendered IN-SCENE so the crystal's transmission REFRACTS it ============
@@ -924,10 +945,16 @@
     if(scrollOpen>0.34 && scrollWhooshArmed){ scrollWhooshArmed=false; playWhoosh(0.55); }
     if(scrollOpen<0.16){ scrollWhooshArmed=true; }
     // cohesion: gentle exposure lift + brighter ambient pad as the crystal opens (motion <-> light <-> sound)
-    renderer.toneMappingExposure=1.20+bloom*0.08+scrollOpen*0.04;
+    renderer.toneMappingExposure=1.08+bloom*0.08+scrollOpen*0.04;
     if(soundOn&&audioBuilt&&padLP&&(++audioFrame%8===0)){
       padLP.frequency.setTargetAtTime(440+bloom*820+scrollOpen*420, actx.currentTime, 0.25);
     }
+
+    // KODE-style swap: show the SEAMLESS whole disc at rest; the instant you interact (hover bloom or any
+    // scroll) it switches to the wedges, which then cut apart + scatter. Reassembles -> swaps back to whole.
+    const interacting = bloom>0.012 || scrollOpen>0.004;
+    if(wholeDisc) wholeDisc.visible = !interacting;
+    for(let si=0; si<slices.length; si++) slices[si].visible = interacting;
 
     // per-wedge bloom transform (depth-staggered scatter + slow roll/turn; identity at rest = seamless whole)
     slices.forEach(g=>{
