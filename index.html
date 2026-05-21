@@ -375,20 +375,72 @@
       x.fillStyle=(Math.random()<0.5?'rgba(255,255,255,':'rgba(0,0,0,')+(0.10+Math.random()*0.4)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
     return c;}
 
+  // ---- CUT-FACE procedural textures (cross-section the user sees when slices separate) ----
+  // DOUGH crumb albedo + matching height: airy baked-bread interior (warm tan + dark air pockets)
+  function doughCrumb(){
+    const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+    const hc=document.createElement('canvas');hc.width=hc.height=512;const hx=hc.getContext('2d');  // grayscale height (holes lower)
+    x.fillStyle='#d8a860';x.fillRect(0,0,512,512);                                                   // warm golden-tan crumb base
+    hx.fillStyle='#9a9a9a';hx.fillRect(0,0,512,512);                                                 // mid height baseline
+    for(let i=0;i<260;i++){const px=Math.random()*512,py=Math.random()*512,r=3+Math.random()*18;     // irregular dark air pockets
+      const g=x.createRadialGradient(px,py,1,px,py,r);g.addColorStop(0,'rgba(156,106,52,0.85)');g.addColorStop(.6,'rgba(156,106,52,0.4)');g.addColorStop(1,'rgba(156,106,52,0)');x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill();
+      const hg=hx.createRadialGradient(px,py,1,px,py,r);hg.addColorStop(0,'rgba(0,0,0,0.7)');hg.addColorStop(1,'rgba(0,0,0,0)');hx.fillStyle=hg;hx.beginPath();hx.arc(px,py,r,0,7);hx.fill();}
+    for(let i=0;i<140;i++){const px=Math.random()*512,py=Math.random()*512,r=1.5+Math.random()*5;    // lighter crumb highlights (raised)
+      x.fillStyle='rgba('+(232+Math.random()*22|0)+','+(192+Math.random()*30|0)+','+(132+Math.random()*40|0)+','+(0.15+Math.random()*0.35)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();
+      hx.fillStyle='rgba(255,255,255,'+(0.18+Math.random()*0.3)+')';hx.beginPath();hx.arc(px,py,r,0,7);hx.fill();}
+    for(let i=0;i<26;i++){const px=Math.random()*512,py=Math.random()*512,r=1+Math.random()*4;       // a few darker char flecks
+      x.fillStyle='rgba('+(70+Math.random()*30|0)+','+(38+Math.random()*18|0)+',16,'+(0.35+Math.random()*0.4)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;
+    return {tex:t,height:hc};}
+  // MELTED-CHEESE cut-face albedo + height: cream/gold with melt blobs, browned spots, bubbles
+  function cheeseCut(){
+    const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+    const hc=document.createElement('canvas');hc.width=hc.height=512;const hx=hc.getContext('2d');
+    x.fillStyle='#eecb78';x.fillRect(0,0,512,512);                                                   // cream/gold melted base
+    hx.fillStyle='#888888';hx.fillRect(0,0,512,512);
+    for(let i=0;i<170;i++){const px=Math.random()*512,py=Math.random()*512,r=8+Math.random()*40;     // soft lighter melt blobs (proud)
+      const g=x.createRadialGradient(px,py,1,px,py,r);g.addColorStop(0,'rgba(246,224,160,0.85)');g.addColorStop(.7,'rgba(246,224,160,0.35)');g.addColorStop(1,'rgba(246,224,160,0)');x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill();
+      const hg=hx.createRadialGradient(px,py,1,px,py,r);hg.addColorStop(0,'rgba(255,255,255,0.55)');hg.addColorStop(1,'rgba(255,255,255,0)');hx.fillStyle=hg;hx.beginPath();hx.arc(px,py,r,0,7);hx.fill();}
+    for(let i=0;i<48;i++){const px=Math.random()*512,py=Math.random()*512,r=4+Math.random()*16;      // golden-browned bubbled spots
+      const g=x.createRadialGradient(px,py,1,px,py,r);g.addColorStop(0,'rgba(207,154,74,0.7)');g.addColorStop(1,'rgba(207,154,74,0)');x.fillStyle=g;x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    for(let i=0;i<120;i++){const px=Math.random()*512,py=Math.random()*512,r=1.5+Math.random()*6;    // small holes/bubbles (low)
+      x.fillStyle='rgba('+(190+Math.random()*30|0)+','+(150+Math.random()*30|0)+',90,'+(0.2+Math.random()*0.35)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();
+      hx.fillStyle='rgba(0,0,0,'+(0.25+Math.random()*0.35)+')';hx.beginPath();hx.arc(px,py,r,0,7);hx.fill();}
+    const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;
+    return {tex:t,height:hc};}
+  // SAUCE cut-face albedo: deep tomato red, mottled, a few brighter flecks
+  function sauceCut(){
+    const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+    x.fillStyle='#a8300e';x.fillRect(0,0,512,512);                                                   // deep tomato red
+    for(let i=0;i<260;i++){const px=Math.random()*512,py=Math.random()*512,r=4+Math.random()*22;     // darker mottling
+      x.fillStyle='rgba(125,34,8,'+(0.18+Math.random()*0.4)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    for(let i=0;i<120;i++){const px=Math.random()*512,py=Math.random()*512,r=2+Math.random()*8;      // brighter flecks (pulp/oil)
+      x.fillStyle='rgba(200,67,26,'+(0.18+Math.random()*0.4)+')';x.beginPath();x.arc(px,py,r,0,7);x.fill();}
+    const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;
+    return t;}
+
+  // build cut-face textures ONCE
+  const _dough=doughCrumb();
+  const doughTex=_dough.tex; doughTex.repeat.set(2.6,2.0);
+  const doughNrm=heightToNormal(_dough.height,3.0); doughNrm.wrapS=doughNrm.wrapT=THREE.RepeatWrapping; doughNrm.repeat.set(2.6,2.0);
+  const _cheeseCut=cheeseCut();
+  const cheeseSideTex=_cheeseCut.tex; cheeseSideTex.repeat.set(3.0,2.4);
+  const cheeseSideNrm=heightToNormal(_cheeseCut.height,2.4); cheeseSideNrm.wrapS=cheeseSideNrm.wrapT=THREE.RepeatWrapping; cheeseSideNrm.repeat.set(3.0,2.4);
+  const sauceTex=sauceCut(); sauceTex.repeat.set(4.0,3.0);
+
   const crTex=crustTex();
   // crust side / cut dough: browned, blistered baked bread (no albedo map → no planar-UV streak on walls)
-  const crustNrm=heightToNormal(breadHeight(),3.0);crustNrm.wrapS=crustNrm.wrapT=THREE.RepeatWrapping;crustNrm.repeat.set(3,1.5);
-  const crustMat=new THREE.MeshStandardMaterial({roughness:0.9,color:0xcf9a55,normalMap:crustNrm,normalScale:new THREE.Vector2(1.45,1.45),envMapIntensity:0.42});  // warmer baked-dough tan (bottom + cut-face dough that shows when a slice lifts)
+  // cut-face dough = procedural airy baked crumb (albedo + bumpy normal), used on bottom + cut-face side walls
+  const crustMat=new THREE.MeshStandardMaterial({map:doughTex,color:0xffffff,roughness:0.86,normalMap:doughNrm,normalScale:new THREE.Vector2(1.3,1.3),envMapIntensity:0.42});  // airy baked crumb (bottom + cut-face dough that shows when a slice lifts)
   // puffy cornicione rim — REAL charred-bread albedo harvested from the CC0 pizza photo (ambientCG Pizza002) + procedural relief.
   // mirrored-repeat hides the seam; procedural breadHeight normal supplies the blistered relief.
   const cornNrm=heightToNormal(breadHeight(),3.4);cornNrm.wrapS=cornNrm.wrapT=THREE.RepeatWrapping;cornNrm.repeat.set(3,2);
   const cornAlb=breadAlbedo();cornAlb.repeat.set(3,2);
   const cornMat=new THREE.MeshStandardMaterial({map:cornAlb,color:0xffffff,roughness:0.86,normalMap:cornNrm,normalScale:new THREE.Vector2(1.18,1.18),envMapIntensity:0.5});
-  texLoader.load('assets/crust_color.jpg', function(t){t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.MirroredRepeatWrapping;t.repeat.set(4,2);t.anisotropy=8;cornMat.map=t;cornMat.color.setHex(0xffffff);cornMat.needsUpdate=true;
-    // also dress the dough block (bottom + cut-face sides) with the real baked-crust photo -> realistic underside when a slice lifts
-    const t2=t.clone();t2.encoding=THREE.sRGBEncoding;t2.wrapS=t2.wrapT=THREE.MirroredRepeatWrapping;t2.repeat.set(2.6,2.6);t2.anisotropy=8;t2.needsUpdate=true;crustMat.map=t2;crustMat.color.setHex(0xffe9cf);crustMat.needsUpdate=true;}, undefined, function(){});
+  texLoader.load('assets/crust_color.jpg', function(t){t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.MirroredRepeatWrapping;t.repeat.set(4,2);t.anisotropy=8;cornMat.map=t;cornMat.color.setHex(0xffffff);cornMat.needsUpdate=true;}, undefined, function(){});
+    // (dough cut-face now uses the procedural crumb texture above — no crust-exterior photo on the dough block)
   const charMat=new THREE.MeshStandardMaterial({map:crTex,roughness:0.82,color:0x7c4f25,envMapIntensity:0.45});
-  const sauceMat=new THREE.MeshStandardMaterial({color:0xa8300e,roughness:0.58,envMapIntensity:0.66});
+  const sauceMat=new THREE.MeshStandardMaterial({map:sauceTex,color:0xffffff,roughness:0.5,envMapIntensity:0.66});  // subtle tomato cross-section line
   // R8 hero cap — REAL melted-pizza PBR (ambientCG "Pizza002", CC0): color+normalGL+roughness+AO+displacement loaded below.
   // UV_INSET crops the cap to the cheesy/saucy INTERIOR of the real photo (the cornicione geometry supplies the crust).
   const UV_INSET=0.82;
@@ -556,7 +608,7 @@
   const slices=[];
 
   // crust (clean baked block) / tomato sauce / melted-cheese body — gives a real layered cross-section on the cut
-  const cheeseSideMat=new THREE.MeshStandardMaterial({color:0xedc878,roughness:0.42,metalness:0.0,envMapIntensity:1.15,emissive:0x160b02,emissiveIntensity:0.04});
+  const cheeseSideMat=new THREE.MeshStandardMaterial({map:cheeseSideTex,color:0xffffff,roughness:0.34,metalness:0.0,normalMap:cheeseSideNrm,normalScale:new THREE.Vector2(1.0,1.0),envMapIntensity:1.2,emissive:0x1a0d02,emissiveIntensity:0.05});  // melty stringy hot-cheese cut edge
   const D1=0.30, D2=0.07, D3=0.13, THICK=D1+D2+D3;
   // NOTE on convention: the extruded wedge body maps shape angle a -> world (cos a, -sin a).
   // So EVERYTHING that must ride with the wedge (cornicione, pull dir, cheese strands, drips)
@@ -679,7 +731,7 @@
   // sag strands: cheese clinging off ONE wedge's exposed top cut face, drooping down (drip).
   const PTS=Q.strPts, NB=Q.strBridge, NS=Q.strSag;               // counts tier-scaled (mobile lighter)
   // gooier/warmer golden cheese, slightly translucent + emissive so the strands glow appetisingly
-  const strandMatBase=new THREE.MeshStandardMaterial({color:0xf0c25a,roughness:0.30,metalness:0.0,emissive:0x33220a,emissiveIntensity:0.42,envMapIntensity:1.15,transparent:true,opacity:0});
+  const strandMatBase=new THREE.MeshStandardMaterial({color:0xf3c357,roughness:0.22,metalness:0.0,emissive:0x3a2406,emissiveIntensity:0.5,envMapIntensity:1.4,transparent:true,opacity:0});
   // cheese sits ON TOP -> strands originate from the upper ~45% of the cheese layer ONLY (near the surface), then sag/drop
   const cheeseLo=D1+D2+D3*0.55, cheeseHi=THICK;
   const cheeseStrands=[];
@@ -690,12 +742,12 @@
     const c=clumps[Math.floor(Math.random()*clumps.length)];
     let posR=c+(Math.random()-0.5)*0.11+(Math.random()-0.5)*0.05;
     posR=Math.max(0.12,Math.min(0.95,posR));
-    // THICKNESS TIERS — a few thick hero ropes + many medium + some thin + occasional wisp
+    // THICKNESS TIERS — clearly varied: a few FAT hero ropes, some medium, more thin, then wisps
     let thick,wisp=false;const roll=Math.random();
-    if(roll<0.15){thick=1.8+Math.random()*1.0;}          // hero ropes (neck + thin as they stretch)
-    else if(roll<0.66){thick=0.72+Math.random()*0.60;}   // medium
-    else if(roll<0.88){thick=0.38+Math.random()*0.30;}   // thin
-    else{thick=0.16+Math.random()*0.16;wisp=true;}       // wisps
+    if(roll<0.16){thick=2.0+Math.random()*1.3;}          // FAT hero ropes (neck + thin as they stretch)
+    else if(roll<0.55){thick=0.8+Math.random()*0.7;}     // medium
+    else if(roll<0.82){thick=0.4+Math.random()*0.32;}    // thin
+    else{thick=0.15+Math.random()*0.16;wisp=true;}       // wisps
     return {mesh,mat,type:'bridge',gap:g,
       posR,                                 // clumped attach radius along the shared boundary
       attF:Math.random(),                   // height across the TOP cheese (cheeseLo..cheeseHi)
