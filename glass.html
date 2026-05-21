@@ -394,13 +394,13 @@
   // through via the low opacity.
   const glassMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
-        color:0xffffff, metalness:0.0, roughness:0.02,              // optically sharp -> crisp glossy streak reflections + clear refraction
-        transmission:1.0, ior:1.5, thickness:0.7,                   // CLEAR thin crystal -> text reads true through it (not absorbed to grey)
+        color:0xffffff, metalness:0.0, roughness:0.015,             // optically sharp
+        transmission:1.0, ior:1.52, thickness:1.0,                  // clear body + a touch more lens distortion of the text behind
         transparent:true,
-        clearcoat:0.8, clearcoatRoughness:0.04,                      // lacquer adds a second crisp specular layer for the streaks
-        attenuationColor:new THREE.Color(0xfff2e6), attenuationDistance:30.0,  // near-clear warm -> elegant crystal, not a pink milky wash
-        specularIntensity:1.0,
-        envMapIntensity:1.3,                                         // HIGH-contrast studio env -> bright streak reflections slide across as it rotates
+        clearcoat:0.15, clearcoatRoughness:0.12,                     // MINIMAL lacquer -> kills the broad pink surface veil; body goes truly clear (blends into the orange, text refracts crisply)
+        attenuationColor:new THREE.Color(0xfff2e6), attenuationDistance:40.0,  // near-zero tint
+        specularIntensity:0.6,                                       // softer surface specular -> not a sheet
+        envMapIntensity:0.6,                                         // gentle studio reflections only at grazing angles
         emissive:0x000000, emissiveIntensity:0.0 })
     : new THREE.MeshPhysicalMaterial({
         color:0xffd5a4, metalness:0.0, roughness:0.09,
@@ -412,9 +412,9 @@
   const cornMat = Q.transmit
     ? new THREE.MeshPhysicalMaterial({
         // etched amber crust edge — also transmission-free so it never triggers the scene transmission pass
-        color:0xffb066, metalness:0.0, roughness:0.06, transparent:true, opacity:0.92,
+        color:0xffc48c, metalness:0.0, roughness:0.05, transparent:true, opacity:0.5,
         clearcoat:1.0, clearcoatRoughness:0.03,
-        envMapIntensity:1.9, emissive:0x180a02, emissiveIntensity:0.04 })
+        envMapIntensity:0.9, emissive:0x180a02, emissiveIntensity:0.03 })
     : new THREE.MeshPhysicalMaterial({
         color:0xffe9cf, metalness:0.0, roughness:0.46, transparent:true, opacity:0.8,
         clearcoat:0.6, clearcoatRoughness:0.3,
@@ -425,7 +425,7 @@
   // Fresnel rim shell (additive) — gives the premium glass edge-glow and feeds the post bloom; intensifies as it blooms.
   const fresnelMat=new THREE.ShaderMaterial({
     uniforms:{ uColor:{value:new THREE.Color(0xffd089)}, uColor2:{value:new THREE.Color(0xfff3e0)},
-               uPower:{value:2.7}, uIntensity:{value:0.34} },
+               uPower:{value:3.7}, uIntensity:{value:0.34} },
     vertexShader:[
       'varying vec3 vWN; varying vec3 vWP;',
       'void main(){',
@@ -975,7 +975,7 @@
 
     // hover-driven glow: jewel bloom intensity + gold fresnel rim rise as the crystal opens
     if(compMat)compMat.uniforms.bloom.value=0.08+bloom*0.30;
-    fresnelMat.uniforms.uIntensity.value=0.07+bloom*0.78;     // thin bright glass edge, not a cream wash
+    fresnelMat.uniforms.uIntensity.value=0.22+bloom*0.78;     // crisp bright glass EDGE defines the lens (clear body)
 
     // skip the (now-invisible) canvas render once the hero has fully scrolled away -> keeps the
     // content sections perfectly smooth; resumes instantly when scrolling back up or on hover.
