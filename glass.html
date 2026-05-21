@@ -29,7 +29,11 @@
     --gold:#ffd9a0;
   }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html{scroll-behavior:smooth;}
+  /* SCROLL FIX: a previous `html{scroll-behavior:smooth}` made programmatic scrolls (scrollTop / scrollTo
+     assignments) ANIMATE. A synchronous read-back right after setting scrollTop then returned 0 even
+     though the page DOES scroll (the animation lands a moment later) — which read as a false "scroll-lock"
+     (window.scrollY appearing stuck at 0). Left at the browser default (auto) so programmatic scroll is
+     instant and read-backs are truthful; native wheel/touch scrolling and section flow are unchanged. */
   html,body{background:var(--orange-hot);color:var(--ink);font-family:"Archivo",system-ui,sans-serif;overflow-x:hidden;}
   body{cursor:none;}
   @media(hover:none){body{cursor:auto;}}
