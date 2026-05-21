@@ -379,7 +379,7 @@
   const SECT=TAU/SLICES;
   const THICK=0.50;                                   // matches D1+D2+D3 of the original so the camera framing holds
   const CR=(2*RADIUS*Math.sin(SECT/2))/(3*(SECT/2));  // sector centroid radius -> pivot the bloom tilt about each wedge's middle
-  const OUT=0.99, UP=0.81;                            // bloom travel: scatter outward + float upward (open but kept in-frame, refined)
+  const OUT=1.24, UP=1.04;                            // bloom travel: BOLD scatter outward + higher float (cinematic "falls apart", still framed)
   const YAXIS=new THREE.Vector3(0,1,0);
   const _qTilt=new THREE.Quaternion(), _qSpin=new THREE.Quaternion();  // reused per-frame (no GC churn)
 
@@ -519,14 +519,14 @@
     g.userData={i,a0,a1,mid,dir,
       cen:new THREE.Vector3(Math.cos(mid)*CR,THICK*0.5,-Math.sin(mid)*CR),
       lift:0,
-      bp:{ stagger:(i%4)*0.06+Math.random()*0.05,    // depth-staggered cascade on bloom + reassemble
-           outV:OUT*(0.84+Math.random()*0.34),
-           upV:UP*(0.66+Math.random()*0.74),
-           tilt:0.55+Math.random()*0.55,             // roll about its own radial axis -> opens gaps, shows glass cut faces
-           wob:0.03+Math.random()*0.04,
+      bp:{ stagger:(i%4)*0.07+Math.random()*0.06,    // depth-staggered cascade on bloom + reassemble (slightly wider spread of timings)
+           outV:OUT*(0.82+Math.random()*0.46),       // bolder, more varied outward throw
+           upV:UP*(0.58+Math.random()*0.96),         // higher, more varied float
+           tilt:0.82+Math.random()*0.98,             // roll MORE about its own radial axis -> bigger gaps, full cut-face reveal
+           wob:0.035+Math.random()*0.05,
            ws:0.4+Math.random()*0.5,                 // slow, calm wobble
            ph:Math.random()*TAU,
-           spin:(Math.random()<0.5?-1:1)*(0.18+Math.random()*0.22), // gentle in-place turn while floating
+           spin:(Math.random()<0.5?-1:1)*(0.30+Math.random()*0.42), // livelier in-place tumble while floating
            axis:dir.clone() }};
     return g;
   }
@@ -536,7 +536,7 @@
   // ---- SCROLL DISSOLVE: a cloud of orange cubes the crystal breaks into (KODE squares) ----
   // All motion runs in the vertex shader (one draw call) and is driven by a single uDiss uniform,
   // so it stays buttery and cheap even on the LOW tier (count is gated below).
-  const PCOUNT = LOW?190:720;
+  const PCOUNT = LOW?230:1180;   // denser cloud for a real showpiece on desktop; kept modest on the LOW tier
   let partsMat=null, partsPts=null;
   (function buildParticles(){
     const N=PCOUNT, g=new THREE.BufferGeometry();
@@ -547,11 +547,11 @@
       const x=Math.cos(a)*r, z=-Math.sin(a)*r;
       const y=0.05+Math.random()*(THICK-0.02)+reliefY(x,z)*0.4;
       pos[k*3]=x; pos[k*3+1]=y; pos[k*3+2]=z;
-      v.set(x,0,z); if(v.lengthSq()<1e-5)v.set(1,0,0); v.normalize();   // mostly-radial outward burst + jitter + upward bias
-      rnd[k*3]  =v.x*(0.55+Math.random()*0.95)+(Math.random()-0.5)*0.55;
-      rnd[k*3+1]=0.45+Math.random()*1.45;
-      rnd[k*3+2]=v.z*(0.55+Math.random()*0.95)+(Math.random()-0.5)*0.55;
-      ph[k]=Math.random()*TAU; scl[k]=0.55+Math.random()*1.05;
+      v.set(x,0,z); if(v.lengthSq()<1e-5)v.set(1,0,0); v.normalize();   // mostly-radial outward burst + jitter + upward bias (bolder magnitudes)
+      rnd[k*3]  =v.x*(0.72+Math.random()*1.26)+(Math.random()-0.5)*0.80;
+      rnd[k*3+1]=0.58+Math.random()*1.92;
+      rnd[k*3+2]=v.z*(0.72+Math.random()*1.26)+(Math.random()-0.5)*0.80;
+      ph[k]=Math.random()*TAU; scl[k]=0.55+Math.random()*1.10;
     }
     g.setAttribute('position',new THREE.BufferAttribute(pos,3));
     g.setAttribute('aRnd',new THREE.BufferAttribute(rnd,3));
@@ -560,7 +560,7 @@
     partsMat=new THREE.ShaderMaterial({
       transparent:true, depthWrite:false, depthTest:true, blending:THREE.NormalBlending,
       uniforms:{ uDiss:{value:0}, uTime:{value:0},
-                 uSize:{value:LOW?7.4:9.0}, uDpr:{value:Math.min(devicePixelRatio,Q.dpr)},
+                 uSize:{value:LOW?7.8:9.8}, uDpr:{value:Math.min(devicePixelRatio,Q.dpr)},
                  uCol:{value:new THREE.Color(0xff5a1f)}, uCol2:{value:new THREE.Color(0xffc27a)} },
       vertexShader:[
         'attribute vec3 aRnd; attribute float aPh; attribute float aScl;',
@@ -570,16 +570,16 @@
         '  float d = clamp(uDiss,0.0,1.0);',
         '  float spread = d*d;',                              // ease-in burst
         '  vec3 p = position;',
-        '  p += aRnd * spread * 3.6;',
-        '  p.y += spread * 1.8;',
-        '  p.x += sin(uTime*0.8 + aPh)*0.13*d;',             // gentle turbulence so the cloud breathes
-        '  p.z += cos(uTime*0.7 + aPh*1.3)*0.13*d;',
-        '  p.y += sin(uTime*0.9 + aPh)*0.07*d;',
-        '  vA = smoothstep(0.02,0.13,d) * (1.0 - smoothstep(0.60,0.90,d));',  // appear, linger, then fully clear before content covers
+        '  p += aRnd * spread * 6.0;',                        // BOLD wide scatter -> a real explosion cloud
+        '  p.y += spread * 2.9;',                             // lift the whole cloud higher
+        '  p.x += sin(uTime*0.8 + aPh)*0.18*d;',             // gentle turbulence so the cloud breathes
+        '  p.z += cos(uTime*0.7 + aPh*1.3)*0.18*d;',
+        '  p.y += sin(uTime*0.9 + aPh)*0.10*d;',
+        '  vA = smoothstep(0.02,0.12,d) * (1.0 - smoothstep(0.66,0.96,d));',  // appear fast, linger longer, then clear before content covers
         '  vM = aScl;',
-        '  vRot = aPh*1.7 + uTime*(0.22 + (aScl-1.0)*0.30);',  // varied per-cube tumble (direction+speed from scale)
+        '  vRot = aPh*1.7 + uTime*(0.26 + (aScl-1.0)*0.38);',  // varied per-cube tumble (direction+speed from scale)
         '  vec4 mv = modelViewMatrix * vec4(p,1.0);',
-        '  gl_PointSize = uSize * aScl * uDpr * (1.0 + d*0.7) * (13.0 / max(0.001,-mv.z));',
+        '  gl_PointSize = uSize * aScl * uDpr * (1.0 + d*0.95) * (13.0 / max(0.001,-mv.z));',
         '  gl_Position = projectionMatrix * mv;',
         '}'].join('\n'),
       fragmentShader:[
@@ -643,21 +643,93 @@
     progEl.style.width=(Math.min(1,scrollY/max)*100).toFixed(2)+'%';
   },{passive:true});
 
-  // sound (ambient hum toggle; soft chime when the bloom kicks off)
-  let actx=null;
-  function ensureCtx(){if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();return actx;}
-  function playChime(){ if(!soundOn)return; const a=ensureCtx();
-    const o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=520;
-    g.gain.value=0;o.connect(g);g.connect(a.destination);o.start();
-    g.gain.linearRampToValueAtTime(0.05,a.currentTime+0.02);g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+0.5);
-    o.frequency.exponentialRampToValueAtTime(720,a.currentTime+0.4);o.stop(a.currentTime+0.55);}
-  let soundOn=false,hum,humGain;
-  document.getElementById('soundtoggle').addEventListener('click',function(){
-    const a=ensureCtx();
-    if(!hum){hum=a.createOscillator();humGain=a.createGain();hum.type='sine';hum.frequency.value=68;humGain.gain.value=0;hum.connect(humGain);humGain.connect(a.destination);hum.start();}
-    soundOn=!soundOn;humGain.gain.linearRampToValueAtTime(soundOn?0.03:0,a.currentTime+0.4);
-    this.textContent=soundOn?'[ SOUND ON ]':'[ SOUND OFF ]';});
-  document.getElementById('rsvpbtn').addEventListener('click',e=>{e.preventDefault();document.querySelector('.rsvp .spots').textContent='Thanks — we will be in touch!';});
+  // ===== SOUND DESIGN (Web Audio API, fully generated in-code — no audio files) ===================
+  // OFF by default. NEVER autoplays: the AudioContext is created + resumed only on the user's first
+  // tap of [ SOUND OFF ]. Everything (warm ambient drone/pad, dissolve whoosh, RSVP click/chime) is
+  // synthesised live. Tap toggles a smooth fade in/out and suspends the context when off (no CPU cost).
+  let actx=null, soundOn=false, audioBuilt=false;
+  let masterGain=null, ambGain=null, fxGain=null, padLP=null, _noise=null;
+  const MASTER=0.9, AMB=LOW?0.46:0.62;                 // overall + ambient targets (sub-gains keep it genuinely quiet)
+  function ensureCtx(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){actx=null;} } return actx; }
+  function noiseBuf(){ if(_noise)return _noise; const a=actx,len=Math.floor(a.sampleRate*1.4),b=a.createBuffer(1,len,a.sampleRate),d=b.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=Math.random()*2-1; _noise=b; return b; }
+
+  function buildAudio(){
+    if(audioBuilt)return; const a=ensureCtx(); if(!a)return; audioBuilt=true;
+    masterGain=a.createGain(); masterGain.gain.value=0.0001; masterGain.connect(a.destination);
+    const masterLP=a.createBiquadFilter(); masterLP.type='lowpass'; masterLP.frequency.value=2800; masterLP.Q.value=0.2; masterLP.connect(masterGain);
+
+    // reverb-ish space: a damped feedback delay (cheap, no impulse asset)
+    const dl=a.createDelay(1.0); dl.delayTime.value=0.34;
+    const fb=a.createGain(); fb.gain.value=LOW?0.30:0.42;
+    const damp=a.createBiquadFilter(); damp.type='lowpass'; damp.frequency.value=1700;
+    const wet=a.createGain(); wet.gain.value=0.5;
+    dl.connect(damp); damp.connect(fb); fb.connect(dl); damp.connect(wet); wet.connect(masterLP);
+    const dryBus=a.createGain(); dryBus.connect(masterLP);
+    const sendBus=a.createGain(); sendBus.gain.value=0.55; sendBus.connect(dl);
+
+    ambGain=a.createGain(); ambGain.gain.value=0.0001; ambGain.connect(dryBus); ambGain.connect(sendBus);  // ambient sub-bus (faded by toggle)
+    fxGain=a.createGain(); fxGain.gain.value=1.0; fxGain.connect(dryBus); fxGain.connect(sendBus);          // interaction sounds
+
+    // --- warm ambient drone/pad: detuned oscillators -> breathing lowpass ---
+    padLP=a.createBiquadFilter(); padLP.type='lowpass'; padLP.frequency.value=480; padLP.Q.value=2.2;
+    const padTrem=a.createGain(); padTrem.gain.value=0.86; padTrem.connect(padLP); padLP.connect(ambGain);
+    const voices=LOW?[[55,'sine',-6,0.10],[82.5,'sine',7,0.07],[110,'sine',-3,0.06]]
+                    :[[55,'sawtooth',-7,0.09],[82.41,'sine',6,0.075],[110,'sawtooth',-3,0.055],[164.81,'sine',5,0.04]];
+    voices.forEach(v=>{ const o=a.createOscillator(); o.type=v[1]; o.frequency.value=v[0]; o.detune.value=v[2];
+      const g=a.createGain(); g.gain.value=v[3]; o.connect(g); g.connect(padTrem); o.start(); });
+    // slow LFO breathes the filter cutoff (sums with the per-frame bloom target set in animate)
+    const lfo=a.createOscillator(); lfo.frequency.value=0.06; const lfoG=a.createGain(); lfoG.gain.value=170;
+    lfo.connect(lfoG); lfoG.connect(padLP.frequency); lfo.start();
+    // slower tremolo on amplitude -> the pad gently swells
+    const lfo2=a.createOscillator(); lfo2.frequency.value=0.085; const lfo2G=a.createGain(); lfo2G.gain.value=0.12;
+    lfo2.connect(lfo2G); lfo2G.connect(padTrem.gain); lfo2.start();
+  }
+
+  // airy whoosh / shimmer — filtered noise sweep, gain scaled by how fast the pizza is blooming/dissolving
+  function playWhoosh(vel){ if(!soundOn||!audioBuilt||!actx)return; const a=actx,now=a.currentTime;
+    const src=a.createBufferSource(); src.buffer=noiseBuf();
+    const bp=a.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=0.85;
+    bp.frequency.setValueAtTime(360,now); bp.frequency.exponentialRampToValueAtTime(2600,now+0.55);
+    const g=a.createGain(); const peak=Math.min(0.12,0.035+Math.abs(vel)*0.11);
+    g.gain.setValueAtTime(0.0001,now); g.gain.exponentialRampToValueAtTime(peak,now+0.07); g.gain.exponentialRampToValueAtTime(0.0001,now+0.75);
+    src.connect(bp); bp.connect(g); g.connect(fxGain); src.start(now); src.stop(now+0.8); }
+
+  // soft click — RSVP hover
+  function playClick(){ if(!soundOn||!audioBuilt||!actx)return; const a=actx,now=a.currentTime;
+    const o=a.createOscillator(); o.type='triangle'; o.frequency.setValueAtTime(820,now); o.frequency.exponentialRampToValueAtTime(1280,now+0.07);
+    const g=a.createGain(); g.gain.setValueAtTime(0.0001,now); g.gain.exponentialRampToValueAtTime(0.045,now+0.008); g.gain.exponentialRampToValueAtTime(0.0001,now+0.17);
+    o.connect(g); g.connect(fxGain); o.start(now); o.stop(now+0.19); }
+
+  // gentle ascending chime — RSVP press
+  function playChime(){ if(!soundOn||!audioBuilt||!actx)return; const a=actx,now=a.currentTime;
+    [660,880,1100].forEach((f,i)=>{ const o=a.createOscillator(); o.type='sine'; o.frequency.value=f;
+      const g=a.createGain(); const t0=now+i*0.06; g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(0.04,t0+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+0.6);
+      o.connect(g); g.connect(fxGain); o.start(t0); o.stop(t0+0.65); }); }
+
+  const soundBtn=document.getElementById('soundtoggle');
+  soundBtn.addEventListener('click',function(){
+    const a=ensureCtx(); if(!a){return;}
+    if(a.state==='suspended')a.resume();              // start on this user gesture (required by browsers)
+    buildAudio();
+    soundOn=!soundOn; const now=a.currentTime;
+    if(soundOn){
+      masterGain.gain.cancelScheduledValues(now); masterGain.gain.setValueAtTime(Math.max(0.0001,masterGain.gain.value),now);
+      masterGain.gain.linearRampToValueAtTime(MASTER,now+0.3);
+      ambGain.gain.cancelScheduledValues(now); ambGain.gain.setValueAtTime(Math.max(0.0001,ambGain.gain.value),now);
+      ambGain.gain.exponentialRampToValueAtTime(AMB,now+1.5);     // ambient fades in slowly
+      this.textContent='[ SOUND ON ]';
+      playClick();
+    }else{
+      ambGain.gain.cancelScheduledValues(now); ambGain.gain.setValueAtTime(Math.max(0.0001,ambGain.gain.value),now);
+      ambGain.gain.exponentialRampToValueAtTime(0.0001,now+0.7); // ambient fades out
+      this.textContent='[ SOUND OFF ]';
+      setTimeout(()=>{ if(!soundOn&&actx&&actx.state==='running')actx.suspend(); },820);  // park the context -> no CPU
+    }});
+
+  const rsvpBtn=document.getElementById('rsvpbtn');
+  rsvpBtn.addEventListener('mouseenter',()=>playClick());
+  rsvpBtn.addEventListener('click',e=>{e.preventDefault();playChime();document.querySelector('.rsvp .spots').textContent='Thanks — we will be in touch!';});
 
   // ---- post: bloom + chromatic aberration + cinematic grade (core three.js) ----
   let PP=true;
@@ -740,6 +812,7 @@
   // adaptive FPS guard: after warm-up, if the device struggles shed cost once (lower DPR, drop DOF/CA, fewer blur passes)
   let fpsWarm=0,fpsAccum=0,fpsFrames=0,fpsDone=false;
   let prevBloomActive=false;
+  let scrollWhooshArmed=true, audioFrame=0;             // dissolve-whoosh re-arm + throttle for per-frame audio modulation
   let scrollPS=0;                                       // smoothed scroll progress -> buttery scroll-driven dissolve
   function animate(){
     requestAnimationFrame(animate);
@@ -800,12 +873,20 @@
       bloomVel=(bloomVel-omega*temp)*expf;
       if(bloom<0)bloom=0; if(bloom>1.05)bloom=1.05; }
     const bloomActive=bloom>0.12;
-    if(bloomActive&&!prevBloomActive)playChime();
+    if(bloomActive&&!prevBloomActive)playWhoosh(Math.max(0.35,bloomVel));  // airy shimmer on bloom onset, scaled by bloom velocity
     prevBloomActive=bloomActive;
 
     // SCROLL-DRIVEN DISSOLVE: scroll progressively blooms the pizza apart (combines with hover/hold)
     const scrollOpen=Math.min(1,s/0.9);
     const opn=Math.min(1.18, bloom + scrollOpen*0.95);
+    // soft dissolve whoosh when scrolling down past the "falling apart" threshold (re-arms near the top)
+    if(scrollOpen>0.34 && scrollWhooshArmed){ scrollWhooshArmed=false; playWhoosh(0.55); }
+    if(scrollOpen<0.16){ scrollWhooshArmed=true; }
+    // cohesion: gentle exposure lift + brighter ambient pad as the crystal opens (motion <-> light <-> sound)
+    renderer.toneMappingExposure=1.20+bloom*0.08+scrollOpen*0.04;
+    if(soundOn&&audioBuilt&&padLP&&(++audioFrame%8===0)){
+      padLP.frequency.setTargetAtTime(440+bloom*820+scrollOpen*420, actx.currentTime, 0.25);
+    }
 
     // per-wedge bloom transform (depth-staggered scatter + slow roll/turn; identity at rest = seamless whole)
     slices.forEach(g=>{
@@ -813,10 +894,10 @@
       let v=opn*(1+bp.stagger)-bp.stagger; v=v<0?0:(v>1?1:v);
       v=v*v*v*(v*(v*6.0-15.0)+10.0);                 // smootherstep -> graceful, no jerk
       g.userData.lift=v;
-      const drift=scrollOpen*scrollOpen*0.55;         // extra outward drift while scrolling -> dissolves into the orange
+      const drift=scrollOpen*scrollOpen*1.05;         // bolder outward drift while scrolling -> wedges fly far before dissolving into the orange
       const wob=Math.sin(t*bp.ws+bp.ph)*bp.wob*v;
-      const ang=v*bp.tilt+wob;                        // open about the radial axis (shows the cut crystal faces)
-      const spinAng=bp.spin*v+Math.sin(t*0.16+bp.ph)*0.10*v + scrollOpen*bp.spin*1.4;  // accelerate the turn as it dissolves
+      const ang=v*bp.tilt+wob + scrollOpen*scrollOpen*bp.tilt*0.6;   // open + extra tumble about the radial axis as it dissolves
+      const spinAng=bp.spin*v+Math.sin(t*0.16+bp.ph)*0.10*v + scrollOpen*bp.spin*2.2;  // accelerate the turn more as it dissolves
       _qTilt.setFromAxisAngle(bp.axis,ang);
       _qSpin.setFromAxisAngle(YAXIS,spinAng);
       g.quaternion.copy(_qSpin).multiply(_qTilt);
